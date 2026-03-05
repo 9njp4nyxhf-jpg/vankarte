@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Van Karte – Marker mit Emojis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body { margin:0; font-family: Arial; background:#f0f0f0; }
+#map { height: 65vh; }
+#controls { padding: 10px; background: #fff; box-shadow:0 2px 5px rgba(0,0,0,0.2);}
+label { margin-right: 15px; }
+#routeList { max-height:200px; overflow-y:auto; margin-top:5px; border:1px solid #ccc; padding:5px; background:#fafafa; border-radius:6px;}
+.route-item { display:flex; justify-content: space-between; align-items:center; margin-bottom:5px; background:#fff; padding:5px 8px; border-radius:5px; box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+.route-item button { margin-left:3px; cursor:pointer; border:none; background:none; font-size:16px;}
+.popup-content {
+  display:flex; 
+  align-items:center; 
+  padding:5px 10px; 
+  border-radius:8px; 
+  box-shadow:0 2px 6px rgba(0,0,0,0.25); 
+  background: #ffffffcc; 
+}
+.popup-icon {width:30px; text-align:center; margin-right:8px; font-size:22px;}
+.popup-info {margin-left:5px; font-size:13px; color:#333;}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div id="controls">
+<strong>Filter:</strong><br>
+<label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
+<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasser</label>
+<label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
+<label><input type="checkbox" checked onchange="toggleCategory('natur')"> 🌲 Natur</label>
+<label><input type="checkbox" checked onchange="toggleCategory('strand')"> 🛶 Paddeln & Wasserfälle</label>
+<label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
+<br><br>
+<button onclick="exportData()">💾 Exportieren</button>
+<input type="file" onchange="importData(event)">
+<button onclick="calculateRoute()">🛣️ Route berechnen</button>
+
+<div id="routeList"></div>
+</div>
+
+<script>
+const orsApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk3YTlkMmYwYTRiYTQ3MjdiNzQyZjMyODNlMDk2N2I2IiwiaCI6Im11cm11cjY0In0=";
+
+var map = L.map('map').setView([54, 15], 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors'}).addTo(map);
+
+var markers = [];
+var categoryLayers = {
+  stellplatz: L.layerGroup().addTo(map),
+  wasser: L.layerGroup().addTo(map),
+  kultur: L.layerGroup().addTo(map),
+  natur: L.layerGroup().addTo(map),
+  strand: L.layerGroup().addTo(map),
+  tiere: L.layerGroup().addTo(map)
+};
+var routeLayer = L.layerGroup().addTo(map);
+
+// Emoji Marker
+function createEmojiIcon(emoji){
+  return L.divIcon({
+    html:`<div style="font-size:24px;">${emoji}</div>`,
+    className:'',
+    iconSize:[30,30],
+    iconAnchor:[15,30]
+  });
+}
+
+var icons = {
+  stellplatz: createEmojiIcon("🚐"),
+  wasser: createEmojiIcon("💧"),
+  kultur: createEmojiIcon("🏰"),
+  natur: createEmojiIcon("🌲"),
+strand: createEmojiIcon("🛶"),
+  tiere: createEmojiIcon("🐾")
+};
+
+var popupInfos = {
+  stellplatz: '💡 Stellplatz verfügbar',
+  wasser: '💧 Frisches Wasser verfügbar',
+  kultur: '🏰 Öffnungszeiten beachten',
+  natur: '🌲 Naturgebiet',
+  strand: '🛶 Paddeln oder Wasserfall',
+  tiere: '🐾 Beobachtungsmöglichkeit'
+};
+
+map.on('click', function(e){
+  var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasser 💧");
+  if(!mainType) return;
+  var name = prompt("Name des Ortes:");
+  if(!name) return;
+  var ownInfo = prompt("Eigene Info (optional):","");
+
+  var category="", text="";
+  if(mainType==1){
+    var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Strand 🏖️\n4=Tiere 🐾");
+    if(subType==1){category="kultur";text="🏰 "+name;}
+    else if(subType==2){category="natur";text="🌲 "+name;}
+   else if(subType==3){category="strand";text="🛶 "+name;}
+    else if(subType==4){category="tiere";text="🐾 "+name;}
+    else return;
+  } else if(mainType==2){category="stellplatz";text="🚐 "+name;}
+  else if(mainType==3){category="wasser";text="💧 "+name;}
+  else return;
+
+  var marker = L.marker(e.latlng,{icon:icons[category]}).bindPopup(
+    `<div class="popup-content">
+      <div class="popup-icon">${text.split(" ")[0]}</div>
+      <div>
+        <div><strong>${name}</strong></div>
+        <div class="popup-info">${popupInfos[category]}</div>
+        ${ownInfo ? `<div class="popup-info">📝 ${ownInfo}</div>` : ""}
+      </div>
+    </div>`
+  ).addTo(categoryLayers[category]);
+
+  markers.push({lat:e.latlng.lat,lng:e.latlng.lng,category:category,text:text,selected:true,leafletMarker:marker,ownInfo:ownInfo});
+  renderRouteList();
+});
+
+// Filter
+function toggleCategory(cat){ map.hasLayer(categoryLayers[cat]) ? map.removeLayer(categoryLayers[cat]) : map.addLayer(categoryLayers[cat]); }
+
+// Export / Import
+function exportData(){ 
+  const exportMarkers = markers.map(m=>({lat:m.lat,lng:m.lng,category:m.category,text:m.text,selected:m.selected,ownInfo:m.ownInfo}));
+  const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(exportMarkers,null,2));
+  const a=document.createElement('a'); a.href=dataStr; a.download="van-karte.json"; a.click();
+}
+function importData(e){
+  var file=e.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    const imported=JSON.parse(e.target.result);
+    imported.forEach(item=>{
+      var marker=L.marker([item.lat,item.lng],{icon:icons[item.category]}).bindPopup(
+        `<div class="popup-content">
+          <div class="popup-icon">${item.text.split(" ")[0]}</div>
+          <div>
+            <div><strong>${item.text.split(" ")[1]}</strong></div>
+            <div class="popup-info">${popupInfos[item.category]}</div>
+            ${item.ownInfo ? `<div class="popup-info">📝 ${item.ownInfo}</div>` : ""}
+          </div>
+        </div>`
+      ).addTo(categoryLayers[item.category]);
+      item.leafletMarker=marker;
+      markers.push(item);
+    });
+    renderRouteList();
+  };
+  reader.readAsText(file);
+}
+
+// Route berechnen
+function calculateRoute(){
+  var selectedMarkers = markers.filter(m=>m.selected);
+  if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
+  var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
+
+  fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
+    method:'POST',
+    headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
+    body:JSON.stringify({coordinates:coords})
+  }).then(r=>r.json()).then(data=>{
+    routeLayer.clearLayers();
+    L.geoJSON(data,{style:{color:'#2980b9',weight:4}}).addTo(routeLayer);
+  }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
+}
+
+// Marker Liste rendern
+function renderRouteList(){
+  const routeDiv = document.getElementById('routeList');
+  routeDiv.innerHTML = '';
+  markers.forEach((m,i)=>{
+    const div = document.createElement('div');
+    div.className = 'route-item';
+    div.innerHTML = `
+      <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)">
+      <span>${m.text}</span>
+      <span>
+        <button onclick="moveUp(${i})">⬆️</button>
+        <button onclick="moveDown(${i})">⬇️</button>
+        <button onclick="deleteMarker(${i})">🗑️</button>
+      </span>`;
+    routeDiv.appendChild(div);
+  });
+}
+
+function toggleSelected(i,cb){markers[i].selected=cb.checked;}
+function moveUp(i){if(i<=0)return; [markers[i-1],markers[i]]=[markers[i],markers[i-1]]; renderRouteList();}
+function moveDown(i){if(i>=markers.length-1)return; [markers[i+1],markers[i]]=[markers[i],markers[i+1]]; renderRouteList();}
+function deleteMarker(i){map.removeLayer(markers[i].leafletMarker); markers.splice(i,1); renderRouteList();}
+
+</script>
+</body>
+</html>
