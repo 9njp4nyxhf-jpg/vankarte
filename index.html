@@ -148,9 +148,8 @@ map.on('click', function(e){
 
   markers.push({lat:e.latlng.lat,lng:e.latlng.lng,category:category,text:text,selected:true,leafletMarker:marker,ownInfo:ownInfo});
 
-// Marker speichern
-localStorage.setItem("vankarte_markers", JSON.stringify(markers));
-
+saveMarkers();
+  
 renderRouteList();
 });
 
@@ -223,11 +222,17 @@ function renderRouteList(){
 }
 
 function toggleSelected(i,cb){markers[i].selected=cb.checked;}
-function moveUp(i){if(i<=0)return; [markers[i-1],markers[i]]=[markers[i],markers[i-1]]; renderRouteList();}
+function moveDown(i){
+if(i>=markers.length-1)return;
+[markers[i+1],markers[i]]=[markers[i],markers[i+1]];
+saveMarkers();
+renderRouteList();
+}
 function moveDown(i){if(i>=markers.length-1)return; [markers[i+1],markers[i]]=[markers[i],markers[i+1]]; renderRouteList();}
 function deleteMarker(i){
   map.removeLayer(markers[i].leafletMarker);
   markers.splice(i,1);
+  saveMarkers();
   renderRouteList();
 }
 
