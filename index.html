@@ -53,6 +53,10 @@ label { margin-right: 15px; }
 <input type="file" onchange="importData(event)">
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
 
+<br><br>
+📸 Foto für nächsten Marker:
+<input type="file" id="photoInput" accept="image/*">
+
 <div id="routeList"></div>
 </div>
 
@@ -133,6 +137,17 @@ map.on('click', function(e){
   var name = prompt("Name des Ortes:");
   if(!name) return;
   var ownInfo = prompt("Eigene Info (optional):","");
+  var photoData = "";
+var fileInput = document.getElementById("photoInput");
+
+if(fileInput.files[0]){
+  var reader = new FileReader();
+  reader.onload = function(event){
+    photoData = event.target.result;
+  };
+  reader.readAsDataURL(fileInput.files[0]);
+}
+  var photo = prompt("Foto URL (optional):","");
 
   var category="", text="";
   if(mainType==1){
@@ -146,18 +161,28 @@ map.on('click', function(e){
   else if(mainType==3){category="wasser";text="💧 "+name;}
   else return;
 
-  var marker = L.marker(e.latlng,{icon:icons[category]}).bindPopup(
-    `<div class="popup-content">
-      <div class="popup-icon">${text.split(" ")[0]}</div>
-      <div>
-        <div><strong>${name}</strong></div>
-        <div class="popup-info">${popupInfos[category]}</div>
-        ${ownInfo ? `<div class="popup-info">📝 ${ownInfo}</div>` : ""}
-      </div>
-    </div>`
-  ).addTo(categoryLayers[category]);
-
-  markers.push({lat:e.latlng.lat,lng:e.latlng.lng,category:category,text:text,selected:true,leafletMarker:marker,ownInfo:ownInfo});
+ var marker = L.marker(e.latlng,{icon:icons[category]}).bindPopup(
+  `<div class="popup-content">
+    <div class="popup-icon">${text.split(" ")[0]}</div>
+    <div>
+      <div><strong>${name}</strong></div>
+      <div class="popup-info">${popupInfos[category]}</div>
+      ${ownInfo ? `<div class="popup-info">📝 ${ownInfo}</div>` : ""}
+      ${photoData ? `<img src="${photoData}" style="width:120px;border-radius:6px;margin-top:5px;">` : ""}
+    </div>
+  </div>`
+).addTo(categoryLayers[category]);
+markers.push({
+lat:e.latlng.lat,
+lng:e.latlng.lng,
+category:category,
+text:text,
+selected:true,
+leafletMarker:marker,
+ownInfo:ownInfo,
+photo:photoData,
+favorite:false
+});
 saveMarkers();
   
 renderRouteList();
