@@ -231,14 +231,25 @@ function renderRouteList(){
   });
 }
 
-function toggleSelected(i,cb){markers[i].selected=cb.checked;}
+function toggleSelected(i,cb){
+markers[i].selected=cb.checked;
+saveMarkers();
+}
+
+function moveUp(i){
+if(i<=0)return;
+[markers[i-1],markers[i]]=[markers[i],markers[i-1]];
+saveMarkers();
+renderRouteList();
+}
+
 function moveDown(i){
 if(i>=markers.length-1)return;
 [markers[i+1],markers[i]]=[markers[i],markers[i+1]];
 saveMarkers();
 renderRouteList();
 }
-function moveDown(i){if(i>=markers.length-1)return; [markers[i+1],markers[i]]=[markers[i],markers[i+1]]; renderRouteList();}
+
 function deleteMarker(i){
   map.removeLayer(markers[i].leafletMarker);
   markers.splice(i,1);
@@ -257,8 +268,8 @@ markers.forEach(function(m){
 
 });
 
+saveMarkers();
 renderRouteList();
-
 </script>
 </body>
 </html>
