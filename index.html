@@ -138,14 +138,15 @@ map.on('click', function(e){
   if(!name) return;
   var ownInfo = prompt("Eigene Info (optional):","");
   var photoData = "";
+var photoData = "";
 var fileInput = document.getElementById("photoInput");
 
-if(fileInput.files[0]){
+if(fileInput.files.length > 0){
   var reader = new FileReader();
-  reader.onload = function(event){
-    photoData = event.target.result;
-  };
   reader.readAsDataURL(fileInput.files[0]);
+  reader.onload = function(e){
+    photoData = e.target.result;
+  };
 }
   var photo = prompt("Foto URL (optional):","");
 
@@ -169,6 +170,7 @@ if(fileInput.files[0]){
       <div class="popup-info">${popupInfos[category]}</div>
       ${ownInfo ? `<div class="popup-info">📝 ${ownInfo}</div>` : ""}
       ${photoData ? `<img src="${photoData}" style="width:120px;border-radius:6px;margin-top:5px;">` : ""}
+${photo ? `<img src="${photo}" style="width:120px;border-radius:6px;margin-top:5px;">` : ""}
     </div>
   </div>`
 ).addTo(categoryLayers[category]);
@@ -286,7 +288,16 @@ function deleteMarker(i){
 markers.forEach(function(m){
 
   var marker = L.marker([m.lat, m.lng], {icon: icons[m.category]})
-    .bindPopup(m.text)
+   .bindPopup(
+  `<div class="popup-content">
+    <div class="popup-icon">${m.text.split(" ")[0]}</div>
+    <div>
+      <div><strong>${m.text.split(" ")[1]}</strong></div>
+      ${m.ownInfo ? `<div class="popup-info">📝 ${m.ownInfo}</div>` : ""}
+      ${m.photo ? `<img src="${m.photo}" style="width:120px;border-radius:6px;margin-top:5px;">` : ""}
+    </div>
+  </div>`
+)
     .addTo(categoryLayers[m.category]);
 
   m.leafletMarker = marker;
