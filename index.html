@@ -89,8 +89,11 @@ var markers = JSON.parse(localStorage.getItem("vankarte_markers")) || [];
     category: m.category,
     text: m.text,
     selected: m.selected,
-    ownInfo: m.ownInfo
+    ownInfo: m.ownInfo,
+    photo: m.photo
   }));
+  localStorage.setItem("vankarte_markers", JSON.stringify(saveData));
+}
   localStorage.setItem("vankarte_markers", JSON.stringify(saveData));
 }
 var categoryLayers = {
