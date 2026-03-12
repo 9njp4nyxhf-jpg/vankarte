@@ -78,6 +78,17 @@ if (navigator.geolocation) {
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors'}).addTo(map);
 
 var markers = JSON.parse(localStorage.getItem("vankarte_markers")) || [];
+  function saveMarkers(){
+  const saveData = markers.map(m => ({
+    lat: m.lat,
+    lng: m.lng,
+    category: m.category,
+    text: m.text,
+    selected: m.selected,
+    ownInfo: m.ownInfo
+  }));
+  localStorage.setItem("vankarte_markers", JSON.stringify(saveData));
+}
 var categoryLayers = {
   stellplatz: L.layerGroup().addTo(map),
   wasser: L.layerGroup().addTo(map),
@@ -147,7 +158,6 @@ map.on('click', function(e){
   ).addTo(categoryLayers[category]);
 
   markers.push({lat:e.latlng.lat,lng:e.latlng.lng,category:category,text:text,selected:true,leafletMarker:marker,ownInfo:ownInfo});
-
 saveMarkers();
   
 renderRouteList();
@@ -246,6 +256,8 @@ markers.forEach(function(m){
   m.leafletMarker = marker;
 
 });
+
+renderRouteList();
 
 </script>
 </body>
