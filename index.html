@@ -11,24 +11,34 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <style>
-body { margin:0; font-family: Arial; background:#f0f0f0; }
-#map { height: 70vh; background: #ddd; }
-#controls { padding: 10px; background: #fff; box-shadow:0 2px 5px rgba(0,0,0,0.2);}
-label { margin-right: 15px; white-space: nowrap; display: inline-block; margin-bottom: 5px; }
-#routeList { max-height:180px; overflow-y:auto; margin-top:5px; border:1px solid #ccc; padding:5px; background:#fafafa; border-radius:6px;}
-.route-item { display:flex; justify-content: space-between; align-items:center; margin-bottom:5px; background:#fff; padding:5px 8px; border-radius:5px; box-shadow:0 1px 3px rgba(0,0,0,0.1);}
-.route-item button { margin-left:3px; cursor:pointer; border:none; background:none; font-size:16px;}
-.popup-content { display:flex; align-items:center; padding:5px 10px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.25); background: #ffffffcc; }
-.popup-icon {width:30px; text-align:center; margin-right:8px; font-size:22px;}
-.popup-info {margin-left:5px; font-size:13px; color:#333;}
-.link-btn { display: inline-block; margin-top: 6px; padding: 4px 8px; background-color: #2980b9; color: white !important; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; }
-.leaflet-control-geocoder-form input { font-size: 14px; }
+body { margin:0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#f7f5f0; color: #4a3f35; }
+#map { height: 65vh; background: #e5e2db; border-bottom: 4px solid #d4a373; }
+#controls { padding: 15px; background: #faf7f2; box-shadow: 0 -3px 10px rgba(0,0,0,0.05); border-radius: 16px 16px 0 0; position: relative; margin-top: -15px; z-index: 1000; }
+strong { color: #bc6c25; font-size: 15px; }
+label { margin-right: 12px; white-space: nowrap; display: inline-block; margin-bottom: 8px; background: #fff; padding: 6px 12px; border-radius: 20px; border: 1px solid #e6dfd3; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: pointer; transition: all 0.2s; }
+label:hover { background: #f4efe6; border-color: #d4a373; }
+button { background-color: #dda15e; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 5px rgba(221,161,94,0.3); transition: all 0.2s; }
+button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,0.4); }
+#photoInput { font-size: 12px; background: #fff; padding: 5px; border-radius: 10px; border: 1px solid #e6dfd3; margin-left: 5px; color: #6b5e4f; }
+#routeList { max-height: 150px; overflow-y: auto; margin-top: 12px; border: 1px solid #e6dfd3; padding: 8px; background: #f1ede2; border-radius: 12px; }
+.route-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: #fff; padding: 6px 10px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); font-size: 13px; border-left: 3px solid #dda15e; }
+.route-item button { margin-left: 3px; cursor: pointer; border: none; background: none; font-size: 15px; padding: 2px; box-shadow: none; }
+.route-item button:hover { background: #f4efe6; }
+.popup-content { display: flex; align-items: center; padding: 4px; background: transparent; }
+.popup-icon { font-size: 24px; margin-right: 10px; background: #f4efe6; padding: 6px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
+.popup-info { margin-top: 2px; font-size: 12px; color: #6b5e4f; }
+.link-btn { display: inline-block; margin-top: 8px; padding: 5px 10px; background-color: #bc6c25; color: white !important; text-decoration: none; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(188,108,37,0.2); }
+.link-btn:hover { background-color: #606c38; }
+.leaflet-popup-content-wrapper { border-radius: 16px; background: #fdfbf7; color: #4a3f35; border: 1px solid #e6dfd3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.leaflet-popup-tip { background: #fdfbf7; }
+.leaflet-control-geocoder { border-radius: 20px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; border: 1px solid #e6dfd3 !important; overflow: hidden; }
+.leaflet-control-geocoder-form input { font-size: 13px; padding: 6px; background: #fdfbf7; }
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div id="controls">
-<strong>Filter:</strong><br>
+<strong>🌾 Wilmas Entdecker-Filter:</strong><br><br>
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
 <label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasser</label>
 <label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
@@ -37,8 +47,6 @@ label { margin-right: 15px; white-space: nowrap; display: inline-block; margin-b
 <label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
 <br><br>
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
-<br><br>
-📸 Foto für nächsten Marker auswählen:
 <input type="file" id="photoInput" accept="image/*">
 <div id="routeList"></div>
 </div>
@@ -94,7 +102,7 @@ tiere: L.layerGroup().addTo(map)
 var routeLayer = L.layerGroup().addTo(map);
 function createEmojiIcon(emoji){
 return L.divIcon({
-html:`<div style="font-size:24px;">${emoji}</div>`,
+html:`<div style="font-size:24px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.15));">${emoji}</div>`,
 className:'',
 iconSize:[30,30],
 iconAnchor:[15,30]
@@ -198,12 +206,12 @@ item.key = key;
 var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
 `<div class="popup-content">
 <div class="popup-icon">${item.text.split(" ")[0]}</div>
-<div>
-<div><strong>${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
+<div style="margin-left: 5px;">
+<div><strong style="color:#bc6c25; font-size:14px;">${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
 <div class="popup-info">${popupInfos[item.category]}</div>
-${item.ownInfo ? `<div class="popup-info">📝 ${item.ownInfo}</div>` : ""}
+${item.ownInfo ? `<div class="popup-info" style="font-style: italic; color:#606c38;">📝 ${item.ownInfo}</div>` : ""}
 ${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
-${item.photo ? `<img src="${item.photo}" style="width:140px; max-height:140px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
+${item.photo ? `<img src="${item.photo}" style="width:150px; max-height:150px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
 </div>
 </div>`
 ).addTo(categoryLayers[item.category]);
@@ -224,7 +232,7 @@ headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
 body:JSON.stringify({coordinates:coords})
 }).then(r=>r.json()).then(data=>{
 routeLayer.clearLayers();
-L.geoJSON(data,{style:{color:'#2980b9',weight:4}}).addTo(routeLayer);
+L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacity:0.85}}).addTo(routeLayer);
 }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
 }
 function renderRouteList(){
@@ -234,8 +242,8 @@ markersArray.forEach((m,i)=>{
 const div = document.createElement('div');
 div.className = 'route-item';
 div.innerHTML = `
-<input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)">
-<span>${m.text}</span>
+<input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)" style="accent-color: #bc6c25;">
+<span style="font-weight: 500; color: #4a3f35;">${m.text}</span>
 <span>
 <button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
 <button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
