@@ -39,7 +39,6 @@ label { margin-right: 15px; white-space: nowrap; display: inline-block; margin-b
 }
 .popup-icon {width:30px; text-align:center; margin-right:8px; font-size:22px;}
 .popup-info {margin-left:5px; font-size:13px; color:#333;}
-/* Style-Anpassung für das Suchfeld, damit es auf Mobilgeräten gut lesbar ist */
 .leaflet-control-geocoder-form input { font-size: 14px; }
 </style>
 </head>
@@ -100,7 +99,7 @@ if (navigator.geolocation) {
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors'}).addTo(map);
 
-// NEU: Suchfunktion (Geocoder) zur Karte hinzufügen
+// Suchfunktion hinzufügen
 L.Control.geocoder({
   defaultMarkGeocode: false,
   placeholder: "🔍 Ort suchen...",
@@ -116,7 +115,6 @@ L.Control.geocoder({
   ]);
   map.fitBounds(poly.getBounds());
   
-  // Optional: Einen kurzen Hinweistext dort anzeigen, wo gesucht wurde
   L.popup()
     .setLatLng(e.geocode.center)
     .setContent("📌 " + e.geocode.name)
@@ -164,7 +162,7 @@ var popupInfos = {
   tiere: '🐾 Beobachtungsmöglichkeit'
 };
 
-// Funktion zur automatischen Bildverkleinerung im Browser
+// Automatische Bildverkleinerung
 function resizeImage(file, maxWidth, callback) {
   var reader = new FileReader();
   reader.readAsDataURL(file);
@@ -302,7 +300,8 @@ function renderRouteList(){
       <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)">
       <span>${m.text}</span>
       <span>
-        <button onclick="deleteMarker('${m.key}')">🗑️</button>
+        <button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
+        <button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
       </span>`;
     routeDiv.appendChild(div);
   });
@@ -310,6 +309,29 @@ function renderRouteList(){
 
 function toggleSelected(i,cb){
   markersArray[i].selected = cb.checked;
+}
+
+// NEU: Marker nachträglich bearbeiten
+function editMarker(key) {
+  // Den passenden Marker aus unserem lokalen Array suchen
+  var markerData = markersArray.find(m => m.key === key);
+  if (!markerData) return;
+
+  var newName = prompt("Neuer Name für den Ort:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ") + 1));
+  if (newName === null) return; // Abbrechen gedrückt
+  
+  var newInfo = prompt("Eigene Info anpassen:", markerData.ownInfo || "");
+  if (newInfo === null) return;
+
+  // Das zugehörige Emoji herausfiltern (erstes Zeichen im Text)
+  var emoji = markerData.text.split(" ")[0];
+
+  // In Firebase aktualisieren
+  database.ref('markers/' + key).update({
+    name: newName,
+    text: emoji + " " + newName,
+    ownInfo: newInfo
+  });
 }
 
 function deleteMarker(key){
