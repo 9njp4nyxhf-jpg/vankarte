@@ -217,3 +217,119 @@ map.on('click', function(e){
     if(subType==1){category="kultur"; text="🏰 " + name;}
     else if(subType==2){category="natur"; text="🌲 " + name;}
     else if(subType==3){category="strand"; text="🛶 " + name;}
+    else if(subType==4){category="tiere"; text="🐾 " + name;}
+    else return;
+  } else if(mainType==2){category="stellplatz"; text="🚐 " + name;}
+  else if(mainType==3){category="wasser"; text="💧 " + name;}
+  else return;
+
+  var fileInput = document.getElementById("photoInput");
+  if(fileInput.files.length > 0){
+    resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
+      saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData);
+    });
+  } else {
+    saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "");
+  }
+});
+
+database.ref('markers').on('value', function(snapshot) {
+  markersArray.forEach(m => {
+    if(m.leafletMarker) map.removeLayer(m.leafletMarker);
+  });
+  markersArray = [];
+
+  const data = snapshot.val();
+  if (data) {
+    Object.keys(data).forEach(key => {
+      var item = data[key];
+      item.key = key;
+
+      var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
+        `<div class="popup-content">
+          <div class="popup-icon">${item.text.split(" ")[0]}</div>
+          <div>
+            <div><strong>${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
+            <div class="popup-info">${popupInfos[item.category]}</div>
+            ${item.ownInfo ? `<div class="popup-info">📝 ${item.ownInfo}</div>` : ""}
+            ${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
+            ${item.photo ? `<img src="${item.photo}" style="width:140px; max-height:140px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
+          </div>
+        </div>`
+      ).addTo(categoryLayers[item.category]);
+
+      item.leafletMarker = marker;
+      markersArray.push(item);
+    });
+  }
+  renderRouteList();
+});
+
+function toggleCategory(cat){ map.hasLayer(categoryLayers[cat]) ? map.removeLayer(categoryLayers[cat]) : map.addLayer(categoryLayers[cat]); }
+
+function calculateRoute(){
+  var selectedMarkers = markersArray.filter(m=>m.selected);
+  if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
+  var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
+
+  fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
+    method:'POST',
+    headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
+    body:JSON.stringify({coordinates:coords})
+  }).then(r=>r.json()).then(data=>{
+    routeLayer.clearLayers();
+    L.geoJSON(data,{style:{color:'#2980b9',weight:4}}).addTo(routeLayer);
+  }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
+}
+
+function renderRouteList(){
+  const routeDiv = document.getElementById('routeList');
+  routeDiv.innerHTML = '';
+  markersArray.forEach((m,i)=>{
+    const div = document.createElement('div');
+    div.className = 'route-item';
+    div.innerHTML = `
+      <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)">
+      <span>${m.text}</span>
+      <span>
+        <button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
+        <button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
+      </span>`;
+    routeDiv.appendChild(div);
+  });
+}
+
+function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
+
+function editMarker(key) {
+  var markerData = markersArray.find(m => m.key === key);
+  if (!markerData) return;
+
+  var newName = prompt("Neuer Name für den Ort:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ") + 1));
+  if (newName === null) return;
+  var newInfo = prompt("Eigene Info anpassen:", markerData.ownInfo || "");
+  if (newInfo === null) return;
+  var newLink = prompt("Link anpassen:", markerData.webLink || "");
+  if (newLink === null) return;
+
+  if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) {
+    newLink = 'https://' + newLink;
+  }
+  var emoji = markerData.text.split(" ")[0];
+
+  database.ref('markers/' + key).update({
+    name: newName,
+    text: emoji + " " + newName,
+    ownInfo: newInfo,
+    webLink: newLink
+  });
+}
+
+function deleteMarker(key){
+  if(confirm("Möchtest du diesen Ort wirklich für alle löschen?")) {
+    database.ref('markers/' + key).remove();
+  }
+}
+</script>
+</body>
+</html>
