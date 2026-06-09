@@ -59,7 +59,7 @@ databaseURL: "https://van-karte-default-rtdb.europe-west1.firebasedatabase.app",
 projectId: "van-karte",
 storageBucket: "van-karte.firebasestorage.app",
 messagingSenderId: "17815837597",
-appId: "1:17815837597:web:94ea8fb1c0db2fdf0dad74"
+appId: "1:17815837597:web:d2d345e1c822b0ee0dad74"
 };
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
@@ -255,28 +255,3 @@ function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
 function editMarker(key) {
 var markerData = markersArray.find(m => m.key === key);
 if (!markerData) return;
-var newName = prompt("Neuer Name für den Ort:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ") + 1));
-if (newName === null) return;
-var newInfo = prompt("Eigene Info anpassen:", markerData.ownInfo || "");
-if (newInfo === null) return;
-var newLink = prompt("Link anpassen:", markerData.webLink || "");
-if (newLink === null) return;
-if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) {
-newLink = 'https://' + newLink;
-}
-var emoji = markerData.text.split(" ")[0];
-database.ref('markers/' + key).update({
-name: newName,
-text: emoji + " " + newName,
-ownInfo: newInfo,
-webLink: newLink
-});
-}
-function deleteMarker(key){
-if(confirm("Möchtest du diesen Ort wirklich für alle löschen?")) {
-database.ref('markers/' + key).remove();
-}
-}
-</script>
-</body>
-</html>
