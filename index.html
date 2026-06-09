@@ -54,7 +54,7 @@ label { margin-right: 15px; }
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
 
 <br><br>
-📸 Foto für nächsten Marker:
+📸 Foto für nächsten Marker auswählen:
 <input type="file" id="photoInput" accept="image/*">
 
 <div id="routeList"></div>
@@ -82,7 +82,8 @@ if (navigator.geolocation) {
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors'}).addTo(map);
 
 var markers = JSON.parse(localStorage.getItem("vankarte_markers")) || [];
-  function saveMarkers(){
+
+function saveMarkers(){
   const saveData = markers.map(m => ({
     lat: m.lat,
     lng: m.lng,
@@ -94,6 +95,7 @@ var markers = JSON.parse(localStorage.getItem("vankarte_markers")) || [];
   }));
   localStorage.setItem("vankarte_markers", JSON.stringify(saveData));
 }
+
 var categoryLayers = {
   stellplatz: L.layerGroup().addTo(map),
   wasser: L.layerGroup().addTo(map),
@@ -119,7 +121,7 @@ var icons = {
   wasser: createEmojiIcon("💧"),
   kultur: createEmojiIcon("🏰"),
   natur: createEmojiIcon("🌲"),
-strand: createEmojiIcon("🛶"),
+  strand: createEmojiIcon("🛶"),
   tiere: createEmojiIcon("🐾")
 };
 
@@ -132,63 +134,71 @@ var popupInfos = {
   tiere: '🐾 Beobachtungsmöglichkeit'
 };
 
+// Hauptfunktion zum Erstellen des Markers auf der Karte
+function addMarkerToMap(latlng, category, text, name, ownInfo, photoData) {
+  var marker = L.marker(latlng, {icon: icons[category]}).bindPopup(
+    `<div class="popup-content">
+      <div class="popup-icon">${text.split(" ")[0]}</div>
+      <div>
+        <div><strong>${name}</strong></div>
+        <div class="popup-info">${popupInfos[category]}</div>
+        ${ownInfo ? `<div class="popup-info">📝 ${ownInfo}</div>` : ""}
+        ${photoData ? `<img src="${photoData}" style="width:120px; max-height:120px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
+      </div>
+    </div>`
+  ).addTo(categoryLayers[category]);
+
+  markers.push({
+    lat: latlng.lat,
+    lng: latlng.lng,
+    category: category,
+    text: text,
+    selected: true,
+    leafletMarker: marker,
+    ownInfo: ownInfo,
+    photo: photoData
+  });
+
+  saveMarkers();
+  renderRouteList();
+  
+  // Foto-Input nach dem Setzen wieder leeren
+  document.getElementById("photoInput").value = "";
+}
+
 map.on('click', function(e){
   var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasser 💧");
   if(!mainType) return;
   var name = prompt("Name des Ortes:");
   if(!name) return;
   var ownInfo = prompt("Eigene Info (optional):","");
-  var photoData = "";
-var photoData = "";
-var fileInput = document.getElementById("photoInput");
-
-if(fileInput.files.length > 0){
-  var reader = new FileReader();
-  reader.readAsDataURL(fileInput.files[0]);
-  reader.onload = function(e){
-    photoData = e.target.result;
-  };
-}
-  var photo = prompt("Foto URL (optional):","");
 
   var category="", text="";
   if(mainType==1){
-    var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Strand 🏖️\n4=Tiere 🐾");
-    if(subType==1){category="kultur";text="🏰 "+name;}
-    else if(subType==2){category="natur";text="🌲 "+name;}
-   else if(subType==3){category="strand";text="🛶 "+name;}
-    else if(subType==4){category="tiere";text="🐾 "+name;}
+    var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Strand 🛶\n4=Tiere 🐾");
+    if(subType==1){category="kultur"; text="🏰 " + name;}
+    else if(subType==2){category="natur"; text="🌲 " + name;}
+    else if(subType==3){category="strand"; text="🛶 " + name;}
+    else if(subType==4){category="tiere"; text="🐾 " + name;}
     else return;
-  } else if(mainType==2){category="stellplatz";text="🚐 "+name;}
-  else if(mainType==3){category="wasser";text="💧 "+name;}
+  } else if(mainType==2){category="stellplatz"; text="🚐 " + name;}
+  else if(mainType==3){category="wasser"; text="💧 " + name;}
   else return;
 
- var marker = L.marker(e.latlng,{icon:icons[category]}).bindPopup(
-  `<div class="popup-content">
-    <div class="popup-icon">${text.split(" ")[0]}</div>
-    <div>
-      <div><strong>${name}</strong></div>
-      <div class="popup-info">${popupInfos[category]}</div>
-      ${ownInfo ? `<div class="popup-info">📝 ${ownInfo}</div>` : ""}
-      ${photoData ? `<img src="${photoData}" style="width:120px;border-radius:6px;margin-top:5px;">` : ""}
-${photo ? `<img src="${photo}" style="width:120px;border-radius:6px;margin-top:5px;">` : ""}
-    </div>
-  </div>`
-).addTo(categoryLayers[category]);
-markers.push({
-lat:e.latlng.lat,
-lng:e.latlng.lng,
-category:category,
-text:text,
-selected:true,
-leafletMarker:marker,
-ownInfo:ownInfo,
-photo:photoData,
-favorite:false
-});
-saveMarkers();
-  
-renderRouteList();
+  var fileInput = document.getElementById("photoInput");
+
+  // Wenn ein Foto ausgewählt wurde, erst einlesen, dann Marker erstellen
+  if(fileInput.files.length > 0){
+    var reader = new FileReader();
+    reader.readAsDataURL(fileInput.files[0]);
+    reader.onload = function(event){
+      var photoData = event.target.result;
+      addMarkerToMap(e.latlng, category, text, name, ownInfo, photoData);
+    };
+  } else {
+    // Wenn kein Foto ausgewählt ist, direkt erstellen
+    addMarkerToMap(e.latlng, category, text, name, ownInfo, "");
+  }
 });
 
 // Filter
@@ -196,29 +206,36 @@ function toggleCategory(cat){ map.hasLayer(categoryLayers[cat]) ? map.removeLaye
 
 // Export / Import
 function exportData(){ 
-  const exportMarkers = markers.map(m=>({lat:m.lat,lng:m.lng,category:m.category,text:m.text,selected:m.selected,ownInfo:m.ownInfo}));
+  const exportMarkers = markers.map(m=>({lat:m.lat,lng:m.lng,category:m.category,text:m.text,selected:m.selected,ownInfo:m.ownInfo,photo:m.photo}));
   const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(exportMarkers,null,2));
   const a=document.createElement('a'); a.href=dataStr; a.download="van-karte.json"; a.click();
 }
+
 function importData(e){
   var file=e.target.files[0]; if(!file) return;
   var reader=new FileReader();
   reader.onload=function(e){
     const imported=JSON.parse(e.target.result);
     imported.forEach(item=>{
+      // Name wieder richtig auslesen (alles nach dem ersten Emoji)
+      var nameIdx = item.text.indexOf(" ") + 1;
+      var displayName = nameIdx > 0 ? item.text.substring(nameIdx) : item.text;
+
       var marker=L.marker([item.lat,item.lng],{icon:icons[item.category]}).bindPopup(
         `<div class="popup-content">
           <div class="popup-icon">${item.text.split(" ")[0]}</div>
           <div>
-            <div><strong>${item.text.split(" ")[1]}</strong></div>
+            <div><strong>${displayName}</strong></div>
             <div class="popup-info">${popupInfos[item.category]}</div>
             ${item.ownInfo ? `<div class="popup-info">📝 ${item.ownInfo}</div>` : ""}
+            ${item.photo ? `<img src="${item.photo}" style="width:120px; max-height:120px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
           </div>
         </div>`
       ).addTo(categoryLayers[item.category]);
       item.leafletMarker=marker;
       markers.push(item);
     });
+    saveMarkers();
     renderRouteList();
   };
   reader.readAsText(file);
@@ -260,22 +277,22 @@ function renderRouteList(){
 }
 
 function toggleSelected(i,cb){
-markers[i].selected=cb.checked;
-saveMarkers();
+  markers[i].selected=cb.checked;
+  saveMarkers();
 }
 
 function moveUp(i){
-if(i<=0)return;
-[markers[i-1],markers[i]]=[markers[i],markers[i-1]];
-saveMarkers();
-renderRouteList();
+  if(i<=0)return;
+  [markers[i-1],markers[i]]=[markers[i],markers[i-1]];
+  saveMarkers();
+  renderRouteList();
 }
 
 function moveDown(i){
-if(i>=markers.length-1)return;
-[markers[i+1],markers[i]]=[markers[i],markers[i+1]];
-saveMarkers();
-renderRouteList();
+  if(i>=markers.length-1)return;
+  [markers[i+1],markers[i]]=[markers[i],markers[i+1]];
+  saveMarkers();
+  renderRouteList();
 }
 
 function deleteMarker(i){
@@ -285,27 +302,27 @@ function deleteMarker(i){
   renderRouteList();
 }
 
-// gespeicherte Marker laden
+// gespeicherte Marker beim Laden der Seite anzeigen
 markers.forEach(function(m){
+  var nameIdx = m.text.indexOf(" ") + 1;
+  var displayName = nameIdx > 0 ? m.text.substring(nameIdx) : m.text;
 
   var marker = L.marker([m.lat, m.lng], {icon: icons[m.category]})
    .bindPopup(
-  `<div class="popup-content">
-    <div class="popup-icon">${m.text.split(" ")[0]}</div>
-    <div>
-      <div><strong>${m.text.split(" ")[1]}</strong></div>
-      ${m.ownInfo ? `<div class="popup-info">📝 ${m.ownInfo}</div>` : ""}
-      ${m.photo ? `<img src="${m.photo}" style="width:120px;border-radius:6px;margin-top:5px;">` : ""}
-    </div>
-  </div>`
-)
-    .addTo(categoryLayers[m.category]);
+    `<div class="popup-content">
+      <div class="popup-icon">${m.text.split(" ")[0]}</div>
+      <div>
+        <div><strong>${displayName}</strong></div>
+        <div class="popup-info">${popupInfos[m.category]}</div>
+        ${m.ownInfo ? `<div class="popup-info">📝 ${m.ownInfo}</div>` : ""}
+        ${m.photo ? `<img src="${m.photo}" style="width:120px; max-height:120px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
+      </div>
+    </div>`
+  ).addTo(categoryLayers[m.category]);
 
   m.leafletMarker = marker;
-
 });
 
-saveMarkers();
 renderRouteList();
 </script>
 </body>
