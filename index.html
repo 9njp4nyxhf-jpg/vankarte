@@ -4,16 +4,12 @@
 <meta charset="utf-8" />
 <title>Van Karte - Familien-Edition</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
 <style>
 body { margin:0; font-family: Arial; background:#f0f0f0; }
 #map { height: 70vh; background: #ddd; }
@@ -22,35 +18,15 @@ label { margin-right: 15px; white-space: nowrap; display: inline-block; margin-b
 #routeList { max-height:180px; overflow-y:auto; margin-top:5px; border:1px solid #ccc; padding:5px; background:#fafafa; border-radius:6px;}
 .route-item { display:flex; justify-content: space-between; align-items:center; margin-bottom:5px; background:#fff; padding:5px 8px; border-radius:5px; box-shadow:0 1px 3px rgba(0,0,0,0.1);}
 .route-item button { margin-left:3px; cursor:pointer; border:none; background:none; font-size:16px;}
-.popup-content {
-  display:flex; 
-  align-items:center; 
-  padding:5px 10px; 
-  border-radius:8px; 
-  box-shadow:0 2px 6px rgba(0,0,0,0.25); 
-  background: #ffffffcc; 
-}
+.popup-content { display:flex; align-items:center; padding:5px 10px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.25); background: #ffffffcc; }
 .popup-icon {width:30px; text-align:center; margin-right:8px; font-size:22px;}
 .popup-info {margin-left:5px; font-size:13px; color:#333;}
-.link-btn {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 4px 8px;
-  background-color: #2980b9;
-  color: white !important;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: bold;
-}
+.link-btn { display: inline-block; margin-top: 6px; padding: 4px 8px; background-color: #2980b9; color: white !important; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold; }
 .leaflet-control-geocoder-form input { font-size: 14px; }
 </style>
 </head>
-
 <body>
-
 <div id="map"></div>
-
 <div id="controls">
 <strong>Filter:</strong><br>
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
@@ -61,274 +37,237 @@ label { margin-right: 15px; white-space: nowrap; display: inline-block; margin-b
 <label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
 <br><br>
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
-
 <br><br>
 📸 Foto für nächsten Marker auswählen:
 <input type="file" id="photoInput" accept="image/*">
-
 <div id="routeList"></div>
 </div>
-
 <script>
 const orsApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk3YTlkMmYwYTRiYTQ3MjdiNzQyZjMyODNlMDk2N2I2IiwiaCI6Im11cm11cjY0In0=";
-
 const firebaseConfig = {
-  apiKey: "AIzaSyC08G4qAOB3I9p7rHyT_IaA9phN1SlmKcw",
-  authDomain: "van-karte.firebaseapp.com",
-  databaseURL: "https://van-karte-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "van-karte",
-  storageBucket: "van-karte.firebasestorage.app",
-  messagingSenderId: "17815837597",
-  appId: "1:17815837597:web:94ea8fb1c0db2fdf0dad74"
+apiKey: "AIzaSyC08G4qAOB3I9p7rHyT_IaA9phN1SlmKcw",
+authDomain: "van-karte.firebaseapp.com",
+databaseURL: "https://van-karte-default-rtdb.europe-west1.firebasedatabase.app",
+projectId: "van-karte",
+storageBucket: "van-karte.firebasestorage.app",
+messagingSenderId: "17815837597",
+appId: "1:17815837597:web:94ea8fb1c0db2fdf0dad74"
 };
-
-// Firebase initialisieren
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
-
-// Karte initialisieren
 var map = L.map('map').setView([54, 15], 4);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors'}).addTo(map);
-
-// GPS Standort anzeigen
 if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(function(position) {
-    var lat = position.coords.latitude;
-    var lng = position.coords.longitude;
-    L.marker([lat, lng]).addTo(map).bindPopup("📍 Du bist hier").openPopup();
-    map.setView([lat, lng], 9);
-  }, function(err) { console.log("GPS nicht verfügbar"); });
+navigator.geolocation.getCurrentPosition(function(position) {
+var lat = position.coords.latitude;
+var lng = position.coords.longitude;
+L.marker([lat, lng]).addTo(map).bindPopup("📍 Du bist hier").openPopup();
+map.setView([lat, lng], 9);
+}, function(err) { console.log("GPS nicht verfügbar"); });
 }
-
-// Suchfunktion hinzufügen
 L.Control.geocoder({
-  defaultMarkGeocode: false,
-  placeholder: "🔍 Ort suchen...",
-  errorMessage: "Ort nicht gefunden."
+defaultMarkGeocode: false,
+placeholder: "🔍 Ort suchen...",
+errorMessage: "Ort nicht gefunden."
 })
 .on('markgeocode', function(e) {
-  var bbox = e.geocode.bbox;
-  var poly = L.polygon([
-    bbox.getSouthEast(),
-    bbox.getNorthEast(),
-    bbox.getNorthWest(),
-    bbox.getSouthWest()
-  ]);
-  map.fitBounds(poly.getBounds());
-  L.popup().setLatLng(e.geocode.center).setContent("📌 " + e.geocode.name).openOn(map);
+var bbox = e.geocode.bbox;
+var poly = L.polygon([
+bbox.getSouthEast(),
+bbox.getNorthEast(),
+bbox.getNorthWest(),
+bbox.getSouthWest()
+]);
+map.fitBounds(poly.getBounds());
+L.popup().setLatLng(e.geocode.center).setContent("📌 " + e.geocode.name).openOn(map);
 })
 .addTo(map);
-
 var markersArray = [];
-
 var categoryLayers = {
-  stellplatz: L.layerGroup().addTo(map),
-  wasser: L.layerGroup().addTo(map),
-  kultur: L.layerGroup().addTo(map),
-  natur: L.layerGroup().addTo(map),
-  strand: L.layerGroup().addTo(map),
-  tiere: L.layerGroup().addTo(map)
+stellplatz: L.layerGroup().addTo(map),
+wasser: L.layerGroup().addTo(map),
+kultur: L.layerGroup().addTo(map),
+natur: L.layerGroup().addTo(map),
+strand: L.layerGroup().addTo(map),
+tiere: L.layerGroup().addTo(map)
 };
 var routeLayer = L.layerGroup().addTo(map);
-
 function createEmojiIcon(emoji){
-  return L.divIcon({
-    html:`<div style="font-size:24px;">${emoji}</div>`,
-    className:'',
-    iconSize:[30,30],
-    iconAnchor:[15,30]
-  });
+return L.divIcon({
+html:`<div style="font-size:24px;">${emoji}</div>`,
+className:'',
+iconSize:[30,30],
+iconAnchor:[15,30]
+});
 }
-
 var icons = {
-  stellplatz: createEmojiIcon("🚐"),
-  wasser: createEmojiIcon("💧"),
-  kultur: createEmojiIcon("🏰"),
-  natur: createEmojiIcon("🌲"),
-  strand: createEmojiIcon("🛶"),
-  tiere: createEmojiIcon("🐾")
+stellplatz: createEmojiIcon("🚐"),
+wasser: createEmojiIcon("💧"),
+kultur: createEmojiIcon("🏰"),
+natur: createEmojiIcon("🌲"),
+strand: createEmojiIcon("🛶"),
+tiere: createEmojiIcon("🐾")
 };
-
 var popupInfos = {
-  stellplatz: '💡 Stellplatz verfügbar',
-  wasser: '💧 Frisches Wasser verfügbar',
-  kultur: '🏰 Öffnungszeiten beachten',
-  natur: '🌲 Naturgebiet',
-  strand: '🛶 Paddeln oder Wasserfall',
-  tiere: '🐾 Beobachtungsmöglichkeit'
+stellplatz: '💡 Stellplatz verfügbar',
+wasser: '💧 Frisches Wasser verfügbar',
+kultur: '🏰 Öffnungszeiten beachten',
+natur: '🌲 Naturgebiet',
+strand: '🛶 Paddeln oder Wasserfall',
+tiere: '🐾 Beobachtungsmöglichkeit'
 };
-
 function resizeImage(file, maxWidth, callback) {
-  var reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = function(event) {
-    var img = new Image();
-    img.src = event.target.result;
-    img.onload = function() {
-      var canvas = document.createElement('canvas');
-      var width = img.width;
-      var height = img.height;
-      if (width > maxWidth) {
-        height *= maxWidth / width;
-        width = maxWidth;
-      }
-      canvas.width = width;
-      canvas.height = height;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      callback(dataUrl);
-    };
-  };
+var reader = new FileReader();
+reader.readAsDataURL(file);
+reader.onload = function(event) {
+var img = new Image();
+img.src = event.target.result;
+img.onload = function() {
+var canvas = document.createElement('canvas');
+var width = img.width;
+var height = img.height;
+if (width > maxWidth) {
+height *= maxWidth / width;
+width = maxWidth;
 }
-
+canvas.width = width;
+canvas.height = height;
+var ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, width, height);
+var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+callback(dataUrl);
+};
+};
+}
 function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData) {
-  if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) {
-    webLink = 'https://' + webLink;
-  }
-  const newMarkerRef = database.ref('markers').push();
-  newMarkerRef.set({
-    lat: latlng.lat,
-    lng: latlng.lng,
-    category: category,
-    text: text,
-    name: name,
-    ownInfo: ownInfo,
-    webLink: webLink || "",
-    photo: photoData,
-    selected: true,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  });
-  document.getElementById("photoInput").value = "";
+if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) {
+webLink = 'https://' + webLink;
 }
-
+const newMarkerRef = database.ref('markers').push();
+newMarkerRef.set({
+lat: latlng.lat,
+lng: latlng.lng,
+category: category,
+text: text,
+name: name,
+ownInfo: ownInfo,
+webLink: webLink || "",
+photo: photoData,
+selected: true,
+timestamp: firebase.database.ServerValue.TIMESTAMP
+});
+document.getElementById("photoInput").value = "";
+}
 map.on('click', function(e){
-  var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasser 💧");
-  if(!mainType) return;
-  var name = prompt("Name des Ortes:");
-  if(!name) return;
-  var ownInfo = prompt("Eigene Info (optional):","");
-  var webLink = prompt("Webseite/Link einfügen (optional):","");
-
-  var category="", text="";
-  if(mainType==1){
-    var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Strand 🛶\n4=Tiere 🐾");
-    if(subType==1){category="kultur"; text="🏰 " + name;}
-    else if(subType==2){category="natur"; text="🌲 " + name;}
-    else if(subType==3){category="strand"; text="🛶 " + name;}
-    else if(subType==4){category="tiere"; text="🐾 " + name;}
-    else return;
-  } else if(mainType==2){category="stellplatz"; text="🚐 " + name;}
-  else if(mainType==3){category="wasser"; text="💧 " + name;}
-  else return;
-
-  var fileInput = document.getElementById("photoInput");
-  if(fileInput.files.length > 0){
-    resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-      saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData);
+var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasser 💧");
+if(!mainType) return;
+var name = prompt("Name des Ortes:");
+if(!name) return;
+var ownInfo = prompt("Eigene Info (optional):","");
+var webLink = prompt("Webseite/Link einfügen (optional):","");
+var category="", text="";
+if(mainType==1){
+var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Strand 🛶\n4=Tiere 🐾");
+if(subType==1){category="kultur"; text="🏰 " + name;}
+else if(subType==2){category="natur"; text="🌲 " + name;}
+else if(subType==3){category="strand"; text="🛶 " + name;}
+else if(subType==4){category="tiere"; text="🐾 " + name;}
+else return;
+} else if(mainType==2){category="stellplatz"; text="🚐 " + name;}
+else if(mainType==3){category="wasser"; text="💧 " + name;}
+else return;
+var fileInput = document.getElementById("photoInput");
+if(fileInput.files.length > 0){
+resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData);
     });
-  } else {
-    saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "");
-  }
+} else {
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "");
+}
 });
-
 database.ref('markers').on('value', function(snapshot) {
-  markersArray.forEach(m => {
-    if(m.leafletMarker) map.removeLayer(m.leafletMarker);
-  });
-  markersArray = [];
-
-  const data = snapshot.val();
-  if (data) {
-    Object.keys(data).forEach(key => {
-      var item = data[key];
-      item.key = key;
-
-      var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
-        `<div class="popup-content">
-          <div class="popup-icon">${item.text.split(" ")[0]}</div>
-          <div>
-            <div><strong>${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
-            <div class="popup-info">${popupInfos[item.category]}</div>
-            ${item.ownInfo ? `<div class="popup-info">📝 ${item.ownInfo}</div>` : ""}
-            ${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
-            ${item.photo ? `<img src="${item.photo}" style="width:140px; max-height:140px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
-          </div>
-        </div>`
-      ).addTo(categoryLayers[item.category]);
-
-      item.leafletMarker = marker;
-      markersArray.push(item);
-    });
-  }
-  renderRouteList();
+markersArray.forEach(m => {
+if(m.leafletMarker) map.removeLayer(m.leafletMarker);
 });
-
+markersArray = [];
+const data = snapshot.val();
+if (data) {
+Object.keys(data).forEach(key => {
+var item = data[key];
+item.key = key;
+var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
+`<div class="popup-content">
+<div class="popup-icon">${item.text.split(" ")[0]}</div>
+<div>
+<div><strong>${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
+<div class="popup-info">${popupInfos[item.category]}</div>
+${item.ownInfo ? `<div class="popup-info">📝 ${item.ownInfo}</div>` : ""}
+${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
+${item.photo ? `<img src="${item.photo}" style="width:140px; max-height:140px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
+</div>
+</div>`
+).addTo(categoryLayers[item.category]);
+item.leafletMarker = marker;
+markersArray.push(item);
+});
+}
+renderRouteList();
+});
 function toggleCategory(cat){ map.hasLayer(categoryLayers[cat]) ? map.removeLayer(categoryLayers[cat]) : map.addLayer(categoryLayers[cat]); }
-
 function calculateRoute(){
-  var selectedMarkers = markersArray.filter(m=>m.selected);
-  if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
-  var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
-
-  fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
-    method:'POST',
-    headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
-    body:JSON.stringify({coordinates:coords})
-  }).then(r=>r.json()).then(data=>{
-    routeLayer.clearLayers();
-    L.geoJSON(data,{style:{color:'#2980b9',weight:4}}).addTo(routeLayer);
-  }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
+var selectedMarkers = markersArray.filter(m=>m.selected);
+if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
+var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
+fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
+method:'POST',
+headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
+body:JSON.stringify({coordinates:coords})
+}).then(r=>r.json()).then(data=>{
+routeLayer.clearLayers();
+L.geoJSON(data,{style:{color:'#2980b9',weight:4}}).addTo(routeLayer);
+}).catch(err=>{console.error(err); alert("Fehler bei Route!");});
 }
-
 function renderRouteList(){
-  const routeDiv = document.getElementById('routeList');
-  routeDiv.innerHTML = '';
-  markersArray.forEach((m,i)=>{
-    const div = document.createElement('div');
-    div.className = 'route-item';
-    div.innerHTML = `
-      <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)">
-      <span>${m.text}</span>
-      <span>
-        <button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
-        <button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
-      </span>`;
-    routeDiv.appendChild(div);
-  });
+const routeDiv = document.getElementById('routeList');
+routeDiv.innerHTML = '';
+markersArray.forEach((m,i)=>{
+const div = document.createElement('div');
+div.className = 'route-item';
+div.innerHTML = `
+<input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)">
+<span>${m.text}</span>
+<span>
+<button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
+<button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
+</span>`;
+routeDiv.appendChild(div);
+});
 }
-
 function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
-
 function editMarker(key) {
-  var markerData = markersArray.find(m => m.key === key);
-  if (!markerData) return;
-
-  var newName = prompt("Neuer Name für den Ort:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ") + 1));
-  if (newName === null) return;
-  var newInfo = prompt("Eigene Info anpassen:", markerData.ownInfo || "");
-  if (newInfo === null) return;
-  var newLink = prompt("Link anpassen:", markerData.webLink || "");
-  if (newLink === null) return;
-
-  if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) {
-    newLink = 'https://' + newLink;
-  }
-  var emoji = markerData.text.split(" ")[0];
-
-  database.ref('markers/' + key).update({
-    name: newName,
-    text: emoji + " " + newName,
-    ownInfo: newInfo,
-    webLink: newLink
-  });
+var markerData = markersArray.find(m => m.key === key);
+if (!markerData) return;
+var newName = prompt("Neuer Name für den Ort:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ") + 1));
+if (newName === null) return;
+var newInfo = prompt("Eigene Info anpassen:", markerData.ownInfo || "");
+if (newInfo === null) return;
+var newLink = prompt("Link anpassen:", markerData.webLink || "");
+if (newLink === null) return;
+if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) {
+newLink = 'https://' + newLink;
 }
-
+var emoji = markerData.text.split(" ")[0];
+database.ref('markers/' + key).update({
+name: newName,
+text: emoji + " " + newName,
+ownInfo: newInfo,
+webLink: newLink
+});
+}
 function deleteMarker(key){
-  if(confirm("Möchtest du diesen Ort wirklich für alle löschen?")) {
-    database.ref('markers/' + key).remove();
-  }
+if(confirm("Möchtest du diesen Ort wirklich für alle löschen?")) {
+database.ref('markers/' + key).remove();
+}
 }
 </script>
 </body>
