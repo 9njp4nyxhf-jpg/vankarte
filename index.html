@@ -39,6 +39,18 @@ label { margin-right: 15px; white-space: nowrap; display: inline-block; margin-b
 }
 .popup-icon {width:30px; text-align:center; margin-right:8px; font-size:22px;}
 .popup-info {margin-left:5px; font-size:13px; color:#333;}
+.link-btn {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background-color: #2980b9;
+  color: white !important;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+.link-btn:hover { background-color: #3498db; }
 .leaflet-control-geocoder-form input { font-size: 14px; }
 </style>
 </head>
@@ -190,7 +202,12 @@ function resizeImage(file, maxWidth, callback) {
 }
 
 // Marker in Firebase speichern
-function saveMarkerToFirebase(latlng, category, text, name, ownInfo, photoData) {
+function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData) {
+  // Falls der Link nicht mit http:// oder https:// anfängt, fügen wir es automatisch hinzu
+  if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) {
+    webLink = 'https://' + webLink;
+  }
+
   const newMarkerRef = database.ref('markers').push();
   newMarkerRef.set({
     lat: latlng.lat,
@@ -199,6 +216,7 @@ function saveMarkerToFirebase(latlng, category, text, name, ownInfo, photoData) 
     text: text,
     name: name,
     ownInfo: ownInfo,
+    webLink: webLink || "",
     photo: photoData,
     selected: true,
     timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -214,6 +232,7 @@ map.on('click', function(e){
   var name = prompt("Name des Ortes:");
   if(!name) return;
   var ownInfo = prompt("Eigene Info (optional):","");
+  var webLink = prompt("Webseite/Link einfügen (optional):","");
 
   var category="", text="";
   if(mainType==1){
@@ -231,10 +250,10 @@ map.on('click', function(e){
 
   if(fileInput.files.length > 0){
     resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-      saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, resizedPhotoData);
+      saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData);
     });
   } else {
-    saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, "");
+    saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "");
   }
 });
 
@@ -258,87 +277,7 @@ database.ref('markers').on('value', function(snapshot) {
             <div><strong>${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
             <div class="popup-info">${popupInfos[item.category]}</div>
             ${item.ownInfo ? `<div class="popup-info">📝 ${item.ownInfo}</div>` : ""}
+            ${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
             ${item.photo ? `<img src="${item.photo}" style="width:140px; max-height:140px; object-fit:cover; border-radius:6px; margin-top:5px;">` : ""}
           </div>
-        </div>`
-      ).addTo(categoryLayers[item.category]);
-
-      item.leafletMarker = marker;
-      markersArray.push(item);
-    });
-  }
-  renderRouteList();
-});
-
-// Filter
-function toggleCategory(cat){ map.hasLayer(categoryLayers[cat]) ? map.removeLayer(categoryLayers[cat]) : map.addLayer(categoryLayers[cat]); }
-
-// Route berechnen
-function calculateRoute(){
-  var selectedMarkers = markersArray.filter(m=>m.selected);
-  if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
-  var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
-
-  fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
-    method:'POST',
-    headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
-    body:JSON.stringify({coordinates:coords})
-  }).then(r=>r.json()).then(data=>{
-    routeLayer.clearLayers();
-    L.geoJSON(data,{style:{color:'#2980b9',weight:4}}).addTo(routeLayer);
-  }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
-}
-
-// Marker Liste an der Seite zeichnen
-function renderRouteList(){
-  const routeDiv = document.getElementById('routeList');
-  routeDiv.innerHTML = '';
-  markersArray.forEach((m,i)=>{
-    const div = document.createElement('div');
-    div.className = 'route-item';
-    div.innerHTML = `
-      <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)">
-      <span>${m.text}</span>
-      <span>
-        <button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
-        <button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
-      </span>`;
-    routeDiv.appendChild(div);
-  });
-}
-
-function toggleSelected(i,cb){
-  markersArray[i].selected = cb.checked;
-}
-
-// NEU: Marker nachträglich bearbeiten
-function editMarker(key) {
-  // Den passenden Marker aus unserem lokalen Array suchen
-  var markerData = markersArray.find(m => m.key === key);
-  if (!markerData) return;
-
-  var newName = prompt("Neuer Name für den Ort:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ") + 1));
-  if (newName === null) return; // Abbrechen gedrückt
-  
-  var newInfo = prompt("Eigene Info anpassen:", markerData.ownInfo || "");
-  if (newInfo === null) return;
-
-  // Das zugehörige Emoji herausfiltern (erstes Zeichen im Text)
-  var emoji = markerData.text.split(" ")[0];
-
-  // In Firebase aktualisieren
-  database.ref('markers/' + key).update({
-    name: newName,
-    text: emoji + " " + newName,
-    ownInfo: newInfo
-  });
-}
-
-function deleteMarker(key){
-  if(confirm("Möchtest du diesen Ort wirklich für alle löschen?")) {
-    database.ref('markers/' + key).remove();
-  }
-}
-</script>
-</body>
-</html>
+        </div>
