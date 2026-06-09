@@ -94,8 +94,6 @@ var markers = JSON.parse(localStorage.getItem("vankarte_markers")) || [];
   }));
   localStorage.setItem("vankarte_markers", JSON.stringify(saveData));
 }
-  localStorage.setItem("vankarte_markers", JSON.stringify(saveData));
-}
 var categoryLayers = {
   stellplatz: L.layerGroup().addTo(map),
   wasser: L.layerGroup().addTo(map),
