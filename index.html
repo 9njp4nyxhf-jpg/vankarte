@@ -41,6 +41,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,
 <div id="controls">
 <strong>🌾 Wilmas Entdecker-Filter:</strong><br><br>
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
+<label><input type="checkbox" checked onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
 <label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasser</label>
 <label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
 <label><input type="checkbox" checked onchange="toggleCategory('natur')"> 🌲 Natur</label>
@@ -97,6 +98,7 @@ L.popup().setLatLng(e.geocode.center).setContent("📌 " + e.geocode.name).openO
 var markersArray = [];
 var categoryLayers = {
 stellplatz: L.layerGroup().addTo(map),
+camping: L.layerGroup().addTo(map),
 wasser: L.layerGroup().addTo(map),
 kultur: L.layerGroup().addTo(map),
 natur: L.layerGroup().addTo(map),
@@ -114,6 +116,7 @@ iconAnchor:[15,30]
 }
 var icons = {
 stellplatz: createEmojiIcon("🚐"),
+camping: createEmojiIcon("⛺"),
 wasser: createEmojiIcon("💧"),
 kultur: createEmojiIcon("🏰"),
 natur: createEmojiIcon("🌲"),
@@ -122,6 +125,7 @@ tiere: createEmojiIcon("🐾")
 };
 var popupInfos = {
 stellplatz: '💡 Stellplatz verfügbar',
+camping: '⛺ Campingplatz (Ausstattung beachten)',
 wasser: '💧 Frisches Wasser verfügbar',
 kultur: '🏰 Öffnungszeiten beachten',
 natur: '🌲 Naturgebiet',
@@ -171,7 +175,7 @@ timestamp: firebase.database.ServerValue.TIMESTAMP
 document.getElementById("photoInput").value = "";
 }
 map.on('click', function(e){
-var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasser 💧");
+var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasser 💧\n4 = Campingplatz ⛺");
 if(!mainType) return;
 var name = prompt("Name des Ortes:");
 if(!name) return;
@@ -187,6 +191,7 @@ else if(subType==4){category="tiere"; text="🐾 " + name;}
 else return;
 } else if(mainType==2){category="stellplatz"; text="🚐 " + name;}
 else if(mainType==3){category="wasser"; text="💧 " + name;}
+else if(mainType==4){category="camping"; text="⛺ " + name;}
 else return;
 var fileInput = document.getElementById("photoInput");
 if(fileInput.files.length > 0){
@@ -236,7 +241,7 @@ headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
 body:JSON.stringify({coordinates:coords})
 }).then(r=>r.json()).then(data=>{
 routeLayer.clearLayers();
-L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacity:0.85}}).addTo(routeLayer);
+L.geoJSON(data,{style:{color:#bc6c25,weight:5,opacity:0.85}}).addTo(routeLayer);
 }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
 }
 function renderRouteList(){
