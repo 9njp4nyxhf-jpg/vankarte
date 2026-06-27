@@ -142,6 +142,7 @@ abenteuer: '🧗 Aktivität & Abenteuer',
 kultur: '🏰 Kultur & Sehenswürdigkeit',
 natur: '🌲 Naturgebiet',
 tiere: '🐾 Tiere beobachten',
+wasser: '💧 Wasserstelle',
 strand: '🛶 Paddel-Highlight'
 };
 function resizeImage(file, maxWidth, callback) {
@@ -210,7 +211,7 @@ resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
 saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
     });
 } else {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
+saveMarkerToFirebase(e.latlng, reliability=true, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
 }
 });
 database.ref('markers').on('value', function(snapshot) {
@@ -231,7 +232,7 @@ var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPo
 <div class="popup-header-box">
 <div class="popup-icon">${item.text.split(" ")[0]}</div>
 <div>
-<strong style="color:#bc6c25; font-size:14px;">${item.name || item.text}</strong>
+<strong style="color:#bc6c25; font-size:14px;">${item.name || item.text.substring(item.text.indexOf(" ")+1)}</strong>
 <div class="popup-info">${popupInfos[item.category]}</div>
 </div>
 </div>
@@ -274,28 +275,43 @@ routeDiv.appendChild(div);
 function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
 function editMarker(key) {
 var markerData = markersArray.find(m => m.key === key); if (!markerData) return;
-var newName = prompt("Neuer Name:", markerData.name || markerData.text); if (newName === null) return;
+var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Wasserstelle 💧\n4 = Genuss & Café ☕\n5 = Loppis & Shoppen 🛍️\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasserwunder 🌊\n9 = Abenteuer 🧗\n10 = Tiere 🐾", "");
+if (catPrompt === null) return;
+var currentCategory = markerData.category; var emoji = markerData.text.split(" ")[0];
+if(catPrompt.trim() !== "") {
+var choice = parseInt(catPrompt.trim());
+if(choice==1){ currentCategory="stellplatz"; emoji="🚐"; }
+else if(choice==2){ currentCategory="camping"; emoji="⛺"; }
+else if(choice==3){ currentCategory="wasser"; emoji="💧"; }
+else if(choice==4){ currentCategory="genuss"; emoji="☕"; }
+else if(choice==5){ currentCategory="shoppen"; emoji="🛍️"; }
+else if(choice==6){ currentCategory="kultur"; emoji="🏰"; }
+else if(choice==7){ currentCategory="natur"; emoji="🌲"; }
+else if(choice==8){ currentCategory="wasserwunder"; emoji="🌊"; }
+else if(choice==9){ currentCategory="abenteuer"; emoji="🧗"; }
+else if(choice==10){ currentCategory="tiere"; emoji="🐾"; }
+}
+var newName = prompt("Name anpassen:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ")+1)); if (newName === null) return;
 var newInfo = prompt("Notizen / Reisetagebuch anpassen:", markerData.ownInfo || ""); if (newInfo === null) return;
 var newLink = prompt("Link anpassen:", markerData.webLink || ""); if (newLink === null) return;
 if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) { newLink = 'https://' + newLink; }
 var currentStrom = markerData.hasStrom || false; var currentWasser = markerData.hasWasser || false;
-if(markerData.category === "stellplatz" || markerData.category === "camping") {
+if(currentCategory === "stellplatz" || currentCategory === "camping") {
 var stromFrage = prompt("Gibt es Strom? (ja / nein)", currentStrom ? "ja" : "nein");
 var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", currentWasser ? "ja" : "nein");
 currentStrom = (stromFrage && stromFrage.toLowerCase().trim() === "ja");
 currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
-}
-var emoji = markerData.text.split(" ")[0]; var ausstattungZusatz = "";
-if(currentStrom) ausstattungZusatz += "⚡"; if(currentWasser) ausstattungZusatz += "💧";
+} else { currentStrom = false; currentWasser = false; }
+var ausstattungZusatz = ""; if(currentStrom) ausstattungZusatz += "⚡"; if(currentWasser) ausstattungZusatz += "💧";
 var fullText = emoji + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
 var fileInput = document.getElementById("photoInput");
 if(fileInput.files.length > 0) {
 resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, photo: resizedPhotoData });
+database.ref('markers/' + key).update({ category: currentCategory, name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, photo: resizedPhotoData });
 document.getElementById("photoInput").value = "";
     });
 } else {
-database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser });
+database.ref('markers/' + key).update({ category: currentCategory, name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser });
 }
 }
 function deleteMarker(key){ if(confirm("Möchtest du diesen Ort wirklich löschen?")) { database.ref('markers/' + key).remove(); } }
