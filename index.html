@@ -12,23 +12,25 @@
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <style>
 body { margin:0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#f7f5f0; color: #4a3f35; }
-#map { height: 65vh; background: #e5e2db; border-bottom: 4px solid #d4a373; }
+#map { height: 60vh; background: #e5e2db; border-bottom: 4px solid #d4a373; }
 #controls { padding: 15px; background: #faf7f2; box-shadow: 0 -3px 10px rgba(0,0,0,0.05); border-radius: 16px 16px 0 0; position: relative; margin-top: -15px; z-index: 1000; }
 strong { color: #bc6c25; font-size: 15px; }
-label { margin-right: 12px; white-space: nowrap; display: inline-block; margin-bottom: 8px; background: #fff; padding: 6px 12px; border-radius: 20px; border: 1px solid #e6dfd3; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: pointer; transition: all 0.2s; }
+label { margin-right: 8px; white-space: nowrap; display: inline-block; margin-bottom: 8px; background: #fff; padding: 6px 12px; border-radius: 20px; border: 1px solid #e6dfd3; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: pointer; transition: all 0.2s; }
 label:hover { background: #f4efe6; border-color: #d4a373; }
 button { background-color: #dda15e; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 5px rgba(221,161,94,0.3); transition: all 0.2s; margin-bottom: 5px; }
 button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,0.4); }
-.photo-box { margin-top: 10px; margin-bottom: 10px; font-size: 13px; color: #6b5e4f; background: #fff; padding: 8px 12px; border-radius: 15px; border: 1px solid #e6dfd3; display: inline-block; }
+.photo-box { margin-top: 5px; margin-bottom: 5px; font-size: 13px; color: #6b5e4f; background: #fff; padding: 8px 12px; border-radius: 15px; border: 1px solid #e6dfd3; display: inline-block; }
 #photoInput { font-size: 12px; margin-left: 5px; color: #6b5e4f; }
-#routeList { max-height: 150px; overflow-y: auto; margin-top: 12px; border: 1px solid #e6dfd3; padding: 8px; background: #f1ede2; border-radius: 12px; }
+#routeList { max-height: 140px; overflow-y: auto; margin-top: 12px; border: 1px solid #e6dfd3; padding: 8px; background: #f1ede2; border-radius: 12px; }
 .route-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: #fff; padding: 6px 10px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); font-size: 13px; border-left: 3px solid #dda15e; }
 .route-item button { margin-left: 3px; cursor: pointer; border: none; background: none; font-size: 15px; padding: 2px; box-shadow: none; }
 .route-item button:hover { background: #f4efe6; }
-.popup-content { display: flex; align-items: center; padding: 4px; background: transparent; }
+.popup-content { display: flex; flex-direction: column; padding: 4px; background: transparent; max-width: 220px; }
+.popup-header-box { display: flex; align-items: center; margin-bottom: 6px; }
 .popup-icon { font-size: 24px; margin-right: 10px; background: #f4efe6; padding: 6px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
 .popup-info { margin-top: 2px; font-size: 12px; color: #6b5e4f; }
-.link-btn { display: inline-block; margin-top: 8px; padding: 5px 10px; background-color: #bc6c25; color: white !important; text-decoration: none; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(188,108,37,0.2); }
+.popup-notes { margin-top: 6px; font-size: 12px; color: #554a3e; background: #f5f0e6; padding: 8px; border-radius: 8px; border-left: 3px solid #bc6c25; white-space: pre-wrap; line-height: 1.4; }
+.link-btn { display: inline-block; margin-top: 8px; padding: 5px 10px; background-color: #bc6c25; color: white !important; text-decoration: none; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(188,108,37,0.2); text-align: center; }
 .link-btn:hover { background-color: #606c38; }
 .leaflet-popup-content-wrapper { border-radius: 16px; background: #fdfbf7; color: #4a3f35; border: 1px solid #e6dfd3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .leaflet-popup-tip { background: #fdfbf7; }
@@ -42,16 +44,17 @@ button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,
 <strong>🌾 Wilmas Entdecker-Filter:</strong><br><br>
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
 <label><input type="checkbox" checked onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
-<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasserstelle</label>
+<label><input type="checkbox" checked onchange="toggleCategory('genuss')"> ☕ Genuss & Café</label>
+<label><input type="checkbox" checked onchange="toggleCategory('shoppen')"> 🛍️ Loppis & Bummeln</label>
+<label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasserwunder</label>
+<label><input type="checkbox" checked onchange="toggleCategory('abenteuer')"> 🧗 Abenteuer</label>
 <label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
 <label><input type="checkbox" checked onchange="toggleCategory('natur')"> 🌲 Natur</label>
-<label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasserwunder & Highlights</label>
-<label><input type="checkbox" checked onchange="toggleCategory('abenteuer')"> 🧗 Abenteuer & Action</label>
 <label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
 <br><br>
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
 <div class="photo-box">
-📸 <span>Foto für Marker (neu oder Update):</span>
+📸 <span>Foto für Marker:</span>
 <input type="file" id="photoInput" accept="image/*">
 </div>
 <div id="routeList"></div>
@@ -86,12 +89,7 @@ errorMessage: "Ort nicht gefunden."
 })
 .on('markgeocode', function(e) {
 var bbox = e.geocode.bbox;
-var poly = L.polygon([
-bbox.getSouthEast(),
-bbox.getNorthEast(),
-bbox.getNorthWest(),
-bbox.getSouthWest()
-]);
+var poly = L.polygon([bbox.getSouthEast(), bbox.getNorthEast(), bbox.getNorthWest(), bbox.getSouthWest()]);
 map.fitBounds(poly.getBounds());
 L.popup().setLatLng(e.geocode.center).setContent("📌 " + e.geocode.name).openOn(map);
 })
@@ -100,12 +98,14 @@ var markersArray = [];
 var categoryLayers = {
 stellplatz: L.layerGroup().addTo(map),
 camping: L.layerGroup().addTo(map),
-wasser: L.layerGroup().addTo(map),
-kultur: L.layerGroup().addTo(map),
-natur: L.layerGroup().addTo(map),
+genuss: L.layerGroup().addTo(map),
+shoppen: L.layerGroup().addTo(map),
 wasserwunder: L.layerGroup().addTo(map),
 abenteuer: L.layerGroup().addTo(map),
+kultur: L.layerGroup().addTo(map),
+natur: L.layerGroup().addTo(map),
 tiere: L.layerGroup().addTo(map),
+wasser: L.layerGroup().addTo(map),
 strand: L.layerGroup().addTo(map)
 };
 var routeLayer = L.layerGroup().addTo(map);
@@ -120,24 +120,28 @@ iconAnchor:[15,30]
 var icons = {
 stellplatz: createEmojiIcon("🚐"),
 camping: createEmojiIcon("⛺"),
-wasser: createEmojiIcon("💧"),
-kultur: createEmojiIcon("🏰"),
-natur: createEmojiIcon("🌲"),
+genuss: createEmojiIcon("☕"),
+shoppen: createEmojiIcon("🛍️"),
 wasserwunder: createEmojiIcon("🌊"),
 abenteuer: createEmojiIcon("🧗"),
+kultur: createEmojiIcon("🏰"),
+natur: createEmojiIcon("🌲"),
 tiere: createEmojiIcon("🐾"),
+wasser: createEmojiIcon("💧"),
 strand: createEmojiIcon("🛶")
 };
 var popupInfos = {
-stellplatz: '💡 Stellplatz-Details',
-camping: '⛺ Campingplatz-Details',
-wasser: '💧 Frisches Wasser verfügbar',
-kultur: '🏰 Öffnungszeiten beachten',
-natur: '🌲 Naturgebiet',
+stellplatz: '🚐 Stellplatz',
+camping: '⛺ Campingplatz',
+genuss: '☕ Café / Restaurant / Eis',
+shoppen: '🛍️ Loppis / Rot-Kreuz / Bummeln',
 wasserwunder: '🌊 Wasserfall / See / Highlight',
-abenteuer: '🧗 Aktivität (Paddeln, Klettern, Rad)',
-tiere: '🐾 Beobachtungsmöglichkeit',
-strand: '🛶 Altes Paddel-Highlight'
+abenteuer: '🧗 Aktivität & Abenteuer',
+kultur: '🏰 Kultur & Sehenswürdigkeit',
+natur: '🌲 Naturgebiet',
+tiere: '🐾 Tiere beobachten',
+wasser: '💧 Wasserstelle',
+strand: '🛶 Paddel-Highlight'
 };
 function resizeImage(file, maxWidth, callback) {
 var reader = new FileReader();
@@ -147,109 +151,100 @@ var img = new Image();
 img.src = event.target.result;
 img.onload = function() {
 var canvas = document.createElement('canvas');
-var width = img.width;
-var height = img.height;
-if (width > maxWidth) {
-height *= maxWidth / width;
-width = maxWidth;
-}
-canvas.width = width;
-canvas.height = height;
-var ctx = canvas.getContext('2d');
-ctx.drawImage(img, 0, 0, width, height);
-var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-callback(dataUrl);
+var width = img.width; var height = img.height;
+if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+canvas.width = width; canvas.height = height;
+var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+var dataUrl = canvas.toDataURL('image/jpeg', 0.7); callback(dataUrl);
 };
 };
 }
-function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser) {
-if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) {
-webLink = 'https://' + webLink;
-}
+function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser, isLiebling) {
+if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) { webLink = 'https://' + webLink; }
 const newMarkerRef = database.ref('markers').push();
 newMarkerRef.set({
-lat: latlng.lat,
-lng: latlng.lng,
-category: category,
-text: text,
-name: name,
-ownInfo: ownInfo,
-webLink: webLink || "",
-photo: photoData,
-hasStrom: hasStrom || false,
-hasWasser: hasWasser || false,
-selected: true,
-timestamp: firebase.database.ServerValue.TIMESTAMP
+lat: latlng.lat, lng: latlng.lng, category: category, text: text, name: name,
+ownInfo: ownInfo || "", webLink: webLink || "", photo: photoData || "",
+hasStrom: hasStrom || false, hasWasser: hasWasser || false, isLiebling: isLiebling || false,
+selected: true, timestamp: firebase.database.ServerValue.TIMESTAMP
 });
 document.getElementById("photoInput").value = "";
 }
 map.on('click', function(e){
-var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasserstelle 💧\n4 = Campingplatz ⛺");
+var mainType = prompt("1 = Sehenswürdigkeit / Aktivität\n2 = Stellplatz 🚐\n3 = Campingplatz ⛺\n4 = Genuss & Café ☕\n5 = Loppis & Shoppen 🛍️\n6 = Wasserstelle 💧");
 if(!mainType) return;
 var name = prompt("Name des Ortes:");
 if(!name) return;
-var ownInfo = prompt("Eigene Info (optional):","");
-var webLink = prompt("Webseite/Link einfügen (optional):","");
-var category="", text="", hasStrom=false, hasWasser=false;
+var ownInfo = prompt("Reisetagebuch / Notizen / Eigene Info:");
+var webLink = prompt("Webseite/Link (optional):","");
+var lieblingFrage = prompt("Ist das ein absoluter Lieblingsplatz? (ja / nein)", "nein");
+var isLiebling = (lieblingFrage && lieblingFrage.toLowerCase().trim() === "ja");
+var category="", text="", emoji="", hasStrom=false, hasWasser=false;
 if(mainType==1){
 var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasserwunder 🌊\n4=Abenteuer & Action 🧗\n5=Tiere 🐾");
-if(subType==1){category="kultur"; text="🏰 " + name;}
-else if(subType==2){category="natur"; text="🌲 " + name;}
-else if(subType==3){category="wasserwunder"; text="🌊 " + name;}
-else if(subType==4){category="abenteuer"; text="🧗 " + name;}
-else if(subType==5){category="tiere"; text="🐾 " + name;}
+if(subType==1){category="kultur"; emoji="🏰";}
+else if(subType==2){category="natur"; emoji="🌲";}
+else if(subType==3){category="wasserwunder"; emoji="🌊";}
+else if(subType==4){category="abenteuer"; emoji="🧗";}
+else if(subType==5){category="tiere"; emoji="🐾";}
 else return;
-} else if(mainType==2 || mainType==4){
+} 
+else if(mainType==2 || mainType==3){
 category = (mainType==2) ? "stellplatz" : "camping";
-var emoji = (mainType==2) ? "🚐 " : "⛺ ";
+emoji = (mainType==2) ? "🚐" : "⛺";
 var stromFrage = prompt("Gibt es Strom? (ja / nein)", "nein");
 var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", "nein");
-var zusatzIcons = "";
-if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; zusatzIcons += "⚡"; }
-if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; zusatzIcons += "💧"; }
-text = emoji + name + (zusatzIcons ? " " + zusatzIcons : "");
-} else if(mainType==3){category="wasser"; text="💧 " + name;}
+if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; }
+if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; }
+} 
+else if(mainType==4){ category="genuss"; emoji="☕"; }
+else if(mainType==5){ category="shoppen"; emoji="🛍️"; }
+else if(mainType==6){ category="wasser"; emoji="💧"; }
 else return;
+var herzenZusatz = isLiebling ? " ❤️" : "";
+var ausstattungZusatz = "";
+if(hasStrom) ausstattungZusatz += "⚡";
+if(hasWasser) ausstattungZusatz += "💧";
+text = emoji + herzenZusatz + " " + name + (ausstattungZusatz ? " " + ausstattungZusatz : "");
 var fileInput = document.getElementById("photoInput");
 if(fileInput.files.length > 0){
 resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser, isLiebling);
     });
 } else {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser, isLiebling);
 }
 });
 database.ref('markers').on('value', function(snapshot) {
-markersArray.forEach(m => {
-if(m.leafletMarker) map.removeLayer(m.leafletMarker);
-});
+markersArray.forEach(m => { if(m.leafletMarker) map.removeLayer(m.leafletMarker); });
 markersArray = [];
 const data = snapshot.val();
 if (data) {
 Object.keys(data).forEach(key => {
-var item = data[key];
-item.key = key;
+var item = data[key]; item.key = key;
 var ausstattungText = "";
 if(item.category === "stellplatz" || item.category === "camping") {
-ausstattungText = `<div class="popup-info" style="margin-top:5px; font-weight:bold; color:#bc6c25;">` +
+ausstattungText = `<div class="popup-info" style="margin-top:4px; font-weight:bold; color:#bc6c25;">` +
 `Ausstattung: ${item.hasStrom ? '⚡ Strom' : '❌ kein Strom'} | ${item.hasWasser ? '💧 Wasser' : '❌ kein Wasser'}` +
 `</div>`;
 }
+var herzenTitel = item.isLiebling ? "❤️ " + item.name : item.name;
 var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
 `<div class="popup-content">
+<div class="popup-header-box">
 <div class="popup-icon">${item.text.split(" ")[0]}</div>
-<div style="margin-left: 5px;">
-<div><strong style="color:#bc6c25; font-size:14px;">${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
+<div>
+<strong style="color:#bc6c25; font-size:14px;">${herzenTitel || item.text}</strong>
 <div class="popup-info">${popupInfos[item.category]}</div>
-${ausstattungText}
-${item.ownInfo ? `<div class="popup-info" style="font-style: italic; color:#606c38; margin-top:4px;">📝 ${item.ownInfo}</div>` : ""}
-${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
-${item.photo ? `<img src="${item.photo}" style="width:150px; max-height:150px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
 </div>
+</div>
+${ausstattungText}
+${item.ownInfo ? `<div class="popup-notes">📝 ${item.ownInfo}</div>` : ""}
+${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
+${item.photo ? `<img src="${item.photo}" style="width:100%; max-height:140px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
 </div>`
 ).addTo(categoryLayers[item.category]);
-item.leafletMarker = marker;
-markersArray.push(item);
+item.leafletMarker = marker; markersArray.push(item);
 });
 }
 renderRouteList();
@@ -260,20 +255,15 @@ var selectedMarkers = markersArray.filter(m=>m.selected);
 if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
 var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
 fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
-method:'POST',
-headers:{'Authorization':orsApiKey,'Content-Type':'application/json'},
-body:JSON.stringify({coordinates:coords})
+method:'POST', headers:{'Authorization':orsApiKey,'Content-Type':'application/json'}, body:JSON.stringify({coordinates:coords})
 }).then(r=>r.json()).then(data=>{
-routeLayer.clearLayers();
-L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacity:0.85}}).addTo(routeLayer);
+routeLayer.clearLayers(); L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacity:0.85}}).addTo(routeLayer);
 }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
 }
 function renderRouteList(){
-const routeDiv = document.getElementById('routeList');
-routeDiv.innerHTML = '';
+const routeDiv = document.getElementById('routeList'); routeDiv.innerHTML = '';
 markersArray.forEach((m,i)=>{
-const div = document.createElement('div');
-div.className = 'route-item';
+const div = document.createElement('div'); div.className = 'route-item';
 div.innerHTML = `
 <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)" style="accent-color: #bc6c25;">
 <span style="font-weight: 500; color: #4a3f35;">${m.text}</span>
@@ -286,60 +276,34 @@ routeDiv.appendChild(div);
 }
 function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
 function editMarker(key) {
-var markerData = markersArray.find(m => m.key === key);
-if (!markerData) return;
-var newName = prompt("Neuer Name für den Ort:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ") + 1));
-if (newName === null) return;
-var newInfo = prompt("Eigene Info anpassen:", markerData.ownInfo || "");
-if (newInfo === null) return;
-var newLink = prompt("Link anpassen:", markerData.webLink || "");
-if (newLink === null) return;
-if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) {
-newLink = 'https://' + newLink;
-}
-var currentStrom = markerData.hasStrom || false;
-var currentWasser = markerData.hasWasser || false;
+var markerData = markersArray.find(m => m.key === key); if (!markerData) return;
+var newName = prompt("Neuer Name:", markerData.name || markerData.text); if (newName === null) return;
+var newInfo = prompt("Notizen / Reisetagebuch anpassen:", markerData.ownInfo || ""); if (newInfo === null) return;
+var newLink = prompt("Link anpassen:", markerData.webLink || ""); if (newLink === null) return;
+if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) { newLink = 'https://' + newLink; }
+var currentStrom = markerData.hasStrom || false; var currentWasser = markerData.hasWasser || false;
 if(markerData.category === "stellplatz" || markerData.category === "camping") {
 var stromFrage = prompt("Gibt es Strom? (ja / nein)", currentStrom ? "ja" : "nein");
 var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", currentWasser ? "ja" : "nein");
 currentStrom = (stromFrage && stromFrage.toLowerCase().trim() === "ja");
 currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
 }
-var emoji = markerData.text.split(" ")[0];
-var zusatzIcons = "";
-if(currentStrom) zusatzIcons += "⚡";
-if(currentWasser) zusatzIcons += "💧";
-var fullText = emoji + " " + newName + (zusatzIcons ? " " + zusatzIcons : "");
+var lieblingFrage = prompt("Ist das ein absoluter Lieblingsplatz? (ja / nein)", markerData.isLiebling ? "ja" : "nein");
+var newLiebling = (lieblingFrage && lieblingFrage.toLowerCase().trim() === "ja");
+var emoji = markerData.text.split(" ")[0]; var herzenZusatz = newLiebling ? " ❤️" : ""; var ausstattungZusatz = "";
+if(currentStrom) ausstattungZusatz += "⚡"; if(currentWasser) ausstattungZusatz += "💧";
+var fullText = emoji + herzenZusatz + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
 var fileInput = document.getElementById("photoInput");
 if(fileInput.files.length > 0) {
 resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-database.ref('markers/' + key).update({
-name: newName,
-text: fullText,
-ownInfo: newInfo,
-webLink: newLink,
-hasStrom: currentStrom,
-hasWasser: currentWasser,
-photo: resizedPhotoData
-});
+database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, isLiebling: newLiebling, photo: resizedPhotoData });
 document.getElementById("photoInput").value = "";
     });
 } else {
-database.ref('markers/' + key).update({
-name: newName,
-text: fullText,
-ownInfo: newInfo,
-webLink: newLink,
-hasStrom: currentStrom,
-hasWasser: currentWasser
-});
+database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, isLiebling: newLiebling });
 }
 }
-function deleteMarker(key){
-if(confirm("Möchtest du diesen Ort wirklich für alle löschen?")) {
-database.ref('markers/' + key).remove();
-}
-}
+function deleteMarker(key){ if(confirm("Möchtest du diesen Ort wirklich löschen?")) { database.ref('markers/' + key).remove(); } }
 </script>
 </body>
 </html>
