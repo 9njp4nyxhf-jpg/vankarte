@@ -51,7 +51,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,
 <br><br>
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
 <div class="photo-box">
-📸 <span>Foto für nächsten Marker:</span>
+📸 <span>Foto für Marker (neu oder Update):</span>
 <input type="file" id="photoInput" accept="image/*">
 </div>
 <div id="routeList"></div>
@@ -310,6 +310,21 @@ var zusatzIcons = "";
 if(currentStrom) zusatzIcons += "⚡";
 if(currentWasser) zusatzIcons += "💧";
 var fullText = emoji + " " + newName + (zusatzIcons ? " " + zusatzIcons : "");
+var fileInput = document.getElementById("photoInput");
+if(fileInput.files.length > 0) {
+resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
+database.ref('markers/' + key).update({
+name: newName,
+text: fullText,
+ownInfo: newInfo,
+webLink: newLink,
+hasStrom: currentStrom,
+hasWasser: currentWasser,
+photo: resizedPhotoData
+});
+document.getElementById("photoInput").value = "";
+    });
+} else {
 database.ref('markers/' + key).update({
 name: newName,
 text: fullText,
@@ -318,6 +333,7 @@ webLink: newLink,
 hasStrom: currentStrom,
 hasWasser: currentWasser
 });
+}
 }
 function deleteMarker(key){
 if(confirm("Möchtest du diesen Ort wirklich für alle löschen?")) {
