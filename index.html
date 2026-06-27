@@ -42,10 +42,11 @@ button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,
 <strong>🌾 Wilmas Entdecker-Filter:</strong><br><br>
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
 <label><input type="checkbox" checked onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
-<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasser</label>
+<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasserstelle</label>
 <label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
 <label><input type="checkbox" checked onchange="toggleCategory('natur')"> 🌲 Natur</label>
-<label><input type="checkbox" checked onchange="toggleCategory('strand')"> 🛶 Paddeln & Wasserfälle</label>
+<label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasserwunder & Highlights</label>
+<label><input type="checkbox" checked onchange="toggleCategory('abenteuer')"> 🧗 Abenteuer & Action</label>
 <label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
 <br><br>
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
@@ -102,8 +103,10 @@ camping: L.layerGroup().addTo(map),
 wasser: L.layerGroup().addTo(map),
 kultur: L.layerGroup().addTo(map),
 natur: L.layerGroup().addTo(map),
-strand: L.layerGroup().addTo(map),
-tiere: L.layerGroup().addTo(map)
+wasserwunder: L.layerGroup().addTo(map),
+abenteuer: L.layerGroup().addTo(map),
+tiere: L.layerGroup().addTo(map),
+strand: L.layerGroup().addTo(map) // Für Abwärtskompatibilität alter Marker
 };
 var routeLayer = L.layerGroup().addTo(map);
 function createEmojiIcon(emoji){
@@ -120,8 +123,10 @@ camping: createEmojiIcon("⛺"),
 wasser: createEmojiIcon("💧"),
 kultur: createEmojiIcon("🏰"),
 natur: createEmojiIcon("🌲"),
-strand: createEmojiIcon("🛶"),
-tiere: createEmojiIcon("🐾")
+wasserwunder: createEmojiIcon("🌊"),
+abenteuer: createEmojiIcon("🧗"),
+tiere: createEmojiIcon("🐾"),
+strand: createEmojiIcon("🛶")
 };
 var popupInfos = {
 stellplatz: '💡 Stellplatz verfügbar',
@@ -129,8 +134,10 @@ camping: '⛺ Campingplatz (Ausstattung beachten)',
 wasser: '💧 Frisches Wasser verfügbar',
 kultur: '🏰 Öffnungszeiten beachten',
 natur: '🌲 Naturgebiet',
-strand: '🛶 Paddeln oder Wasserfall',
-tiere: '🐾 Beobachtungsmöglichkeit'
+wasserwunder: '🌊 Wasserfall / See / Highlight',
+abenteuer: '🧗 Aktivität (Paddeln, Klettern, Rad)',
+tiere: '🐾 Beobachtungsmöglichkeit',
+strand: '🛶 Altes Paddel-Highlight'
 };
 function resizeImage(file, maxWidth, callback) {
 var reader = new FileReader();
@@ -175,7 +182,7 @@ timestamp: firebase.database.ServerValue.TIMESTAMP
 document.getElementById("photoInput").value = "";
 }
 map.on('click', function(e){
-var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasser 💧\n4 = Campingplatz ⛺");
+var mainType = prompt("1 = Sehenswürdigkeit\n2 = Stellplatz 🚐\n3 = Wasserstelle 💧\n4 = Campingplatz ⛺");
 if(!mainType) return;
 var name = prompt("Name des Ortes:");
 if(!name) return;
@@ -183,11 +190,12 @@ var ownInfo = prompt("Eigene Info (optional):","");
 var webLink = prompt("Webseite/Link einfügen (optional):","");
 var category="", text="";
 if(mainType==1){
-var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Strand 🛶\n4=Tiere 🐾");
+var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasserwunder 🌊\n4=Abenteuer & Action 🧗\n5=Tiere 🐾");
 if(subType==1){category="kultur"; text="🏰 " + name;}
 else if(subType==2){category="natur"; text="🌲 " + name;}
-else if(subType==3){category="strand"; text="🛶 " + name;}
-else if(subType==4){category="tiere"; text="🐾 " + name;}
+else if(subType==3){category="wasserwunder"; text="🌊 " + name;}
+else if(subType==4){category="abenteuer"; text="🧗 " + name;}
+else if(subType==5){category="tiere"; text="🐾 " + name;}
 else return;
 } else if(mainType==2){category="stellplatz"; text="🚐 " + name;}
 else if(mainType==3){category="wasser"; text="💧 " + name;}
