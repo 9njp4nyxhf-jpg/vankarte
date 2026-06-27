@@ -160,13 +160,13 @@ var dataUrl = canvas.toDataURL('image/jpeg', 0.7); callback(dataUrl);
 };
 };
 }
-function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser, isLiebling) {
+function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser) {
 if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) { webLink = 'https://' + webLink; }
 const newMarkerRef = database.ref('markers').push();
 newMarkerRef.set({
 lat: latlng.lat, lng: latlng.lng, category: category, text: text, name: name,
 ownInfo: ownInfo || "", webLink: webLink || "", photo: photoData || "",
-hasStrom: hasStrom || false, hasWasser: hasWasser || false, isLiebling: isLiebling || false,
+hasStrom: hasStrom || false, hasWasser: hasWasser || false,
 selected: true, timestamp: firebase.database.ServerValue.TIMESTAMP
 });
 document.getElementById("photoInput").value = "";
@@ -178,8 +178,6 @@ var name = prompt("Name des Ortes:");
 if(!name) return;
 var ownInfo = prompt("Reisetagebuch / Notizen / Eigene Info:");
 var webLink = prompt("Webseite/Link (optional):","");
-var lieblingFrage = prompt("Ist das ein absoluter Lieblingsplatz? (ja / nein)", "nein");
-var isLiebling = (lieblingFrage && lieblingFrage.toLowerCase().trim() === "ja");
 var category="", text="", emoji="", hasStrom=false, hasWasser=false;
 if(mainType==1 || mainType==2){
 category = (mainType==1) ? "stellplatz" : "camping";
@@ -202,18 +200,17 @@ else if(subType==5){category="tiere"; emoji="🐾";}
 else return;
 } 
 else return;
-var herzenZusatz = isLiebling ? " ❤️" : "";
 var ausstattungZusatz = "";
 if(hasStrom) ausstattungZusatz += "⚡";
 if(hasWasser) ausstattungZusatz += "💧";
-text = emoji + herzenZusatz + " " + name + (ausstattungZusatz ? " " + ausstattungZusatz : "");
+text = emoji + " " + name + (ausstattungZusatz ? " " + ausstattungZusatz : "");
 var fileInput = document.getElementById("photoInput");
 if(fileInput.files.length > 0){
 resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser, isLiebling);
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
     });
 } else {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser, isLiebling);
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
 }
 });
 database.ref('markers').on('value', function(snapshot) {
@@ -229,13 +226,12 @@ ausstattungText = `<div class="popup-info" style="margin-top:4px; font-weight:bo
 `Ausstattung: ${item.hasStrom ? '⚡ Strom' : '❌ kein Strom'} | ${item.hasWasser ? '💧 Wasser' : '❌ kein Wasser'}` +
 `</div>`;
 }
-var herzenTitel = item.isLiebling ? "❤️ " + item.name : item.name;
 var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
 `<div class="popup-content">
 <div class="popup-header-box">
 <div class="popup-icon">${item.text.split(" ")[0]}</div>
 <div>
-<strong style="color:#bc6c25; font-size:14px;">${herzenTitel || item.text}</strong>
+<strong style="color:#bc6c25; font-size:14px;">${item.name || item.text}</strong>
 <div class="popup-info">${popupInfos[item.category]}</div>
 </div>
 </div>
@@ -289,19 +285,17 @@ var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", currentWasser ?
 currentStrom = (stromFrage && stromFrage.toLowerCase().trim() === "ja");
 currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
 }
-var lieblingFrage = prompt("Ist das ein absoluter Lieblingsplatz? (ja / nein)", markerData.isLiebling ? "ja" : "nein");
-var newLiebling = (lieblingFrage && lieblingFrage.toLowerCase().trim() === "ja");
-var emoji = markerData.text.split(" ")[0]; var herzenZusatz = newLiebling ? " ❤️" : ""; var ausstattungZusatz = "";
+var emoji = markerData.text.split(" ")[0]; var ausstattungZusatz = "";
 if(currentStrom) ausstattungZusatz += "⚡"; if(currentWasser) ausstattungZusatz += "💧";
-var fullText = emoji + herzenZusatz + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
+var fullText = emoji + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
 var fileInput = document.getElementById("photoInput");
 if(fileInput.files.length > 0) {
 resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, isLiebling: newLiebling, photo: resizedPhotoData });
+database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, photo: resizedPhotoData });
 document.getElementById("photoInput").value = "";
     });
 } else {
-database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, isLiebling: newLiebling });
+database.ref('markers/' + key).update({ name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser });
 }
 }
 function deleteMarker(key){ if(confirm("Möchtest du diesen Ort wirklich löschen?")) { database.ref('markers/' + key).remove(); } }
