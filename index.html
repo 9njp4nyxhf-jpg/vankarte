@@ -48,7 +48,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,
 <label><input type="checkbox" checked onchange="toggleCategory('genuss')"> ☕ Genuss & Café</label>
 <label><input type="checkbox" checked onchange="toggleCategory('shoppen')"> 🛍️ Loppis & Bummeln</label>
 <label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasserwunder</label>
-<label><input type="checkbox" checked onchange="toggleCategory('abenteuer')"> 🧗 Abenteuer</label>
+<label><input type="checkbox" checked onchange="toggleCategory('abenteuer')"> 🚶 Abenteuer</label>
 <label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
 <label><input type="checkbox" checked onchange="toggleCategory('natur')"> 🌲 Natur</label>
 <label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
@@ -125,7 +125,7 @@ wasser: createEmojiIcon("💧"),
 genuss: createEmojiIcon("☕"),
 shoppen: createEmojiIcon("🛍️"),
 wasserwunder: createEmojiIcon("🌊"),
-abenteuer: createEmojiIcon("🧗"),
+abenteuer: createEmojiIcon("🚶"),
 kultur: createEmojiIcon("🏰"),
 natur: createEmojiIcon("🌲"),
 tiere: createEmojiIcon("🐾"),
@@ -138,11 +138,10 @@ wasser: '💧 Wasserstelle',
 genuss: '☕ Café / Restaurant / Eis',
 shoppen: '🛍️ Loppis / Rot-Kreuz / Bummeln',
 wasserwunder: '🌊 Wasserfall / See / Highlight',
-abenteuer: '🧗 Aktivität & Abenteuer',
+abenteuer: '🚶 Aktivität & Abenteuer',
 kultur: '🏰 Kultur & Sehenswürdigkeit',
 natur: '🌲 Naturgebiet',
 tiere: '🐾 Tiere beobachten',
-wasser: '💧 Wasserstelle',
 strand: '🛶 Paddel-Highlight'
 };
 function resizeImage(file, maxWidth, callback) {
@@ -192,11 +191,11 @@ else if(mainType==3){ category="wasser"; emoji="💧"; }
 else if(mainType==4){ category="genuss"; emoji="☕"; }
 else if(mainType==5){ category="shoppen"; emoji="🛍️"; }
 else if(mainType==6){
-var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasserwunder 🌊\n4=Abenteuer & Action 🧗\n5=Tiere 🐾");
+var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasserwunder 🌊\n4=Abenteuer & Action 🚶\n5=Tiere 🐾");
 if(subType==1){category="kultur"; emoji="🏰";}
 else if(subType==2){category="natur"; emoji="🌲";}
 else if(subType==3){category="wasserwunder"; emoji="🌊";}
-else if(subType==4){category="abenteuer"; emoji="🧗";}
+else if(subType==4){category="abenteuer"; emoji="🚶";}
 else if(subType==5){category="tiere"; emoji="🐾";}
 else return;
 } 
@@ -211,7 +210,7 @@ resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
 saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
     });
 } else {
-saveMarkerToFirebase(e.latlng, reliability=true, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
 }
 });
 database.ref('markers').on('value', function(snapshot) {
@@ -275,7 +274,7 @@ routeDiv.appendChild(div);
 function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
 function editMarker(key) {
 var markerData = markersArray.find(m => m.key === key); if (!markerData) return;
-var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Wasserstelle 💧\n4 = Genuss & Café ☕\n5 = Loppis & Shoppen 🛍️\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasserwunder 🌊\n9 = Abenteuer 🧗\n10 = Tiere 🐾", "");
+var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Wasserstelle 💧\n4 = Genuss & Café ☕\n5 = Loppis & Shoppen 🛍️\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasserwunder 🌊\n9 = Abenteuer 🚶\n10 = Tiere 🐾", "");
 if (catPrompt === null) return;
 var currentCategory = markerData.category; var emoji = markerData.text.split(" ")[0];
 if(catPrompt.trim() !== "") {
@@ -288,7 +287,7 @@ else if(choice==5){ currentCategory="shoppen"; emoji="🛍️"; }
 else if(choice==6){ currentCategory="kultur"; emoji="🏰"; }
 else if(choice==7){ currentCategory="natur"; emoji="🌲"; }
 else if(choice==8){ currentCategory="wasserwunder"; emoji="🌊"; }
-else if(choice==9){ currentCategory="abenteuer"; emoji="🧗"; }
+else if(choice==9){ currentCategory="abenteuer"; emoji="🚶"; }
 else if(choice==10){ currentCategory="tiere"; emoji="🐾"; }
 }
 var newName = prompt("Name anpassen:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ")+1)); if (newName === null) return;
