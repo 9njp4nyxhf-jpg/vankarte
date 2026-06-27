@@ -44,6 +44,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 3px 8px rgba(188,108,37,
 <strong>🌾 Wilmas Entdecker-Filter:</strong><br><br>
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
 <label><input type="checkbox" checked onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
+<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasserstelle</label>
 <label><input type="checkbox" checked onchange="toggleCategory('genuss')"> ☕ Genuss & Café</label>
 <label><input type="checkbox" checked onchange="toggleCategory('shoppen')"> 🛍️ Loppis & Bummeln</label>
 <label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasserwunder</label>
@@ -98,6 +99,7 @@ var markersArray = [];
 var categoryLayers = {
 stellplatz: L.layerGroup().addTo(map),
 camping: L.layerGroup().addTo(map),
+wasser: L.layerGroup().addTo(map),
 genuss: L.layerGroup().addTo(map),
 shoppen: L.layerGroup().addTo(map),
 wasserwunder: L.layerGroup().addTo(map),
@@ -105,7 +107,6 @@ abenteuer: L.layerGroup().addTo(map),
 kultur: L.layerGroup().addTo(map),
 natur: L.layerGroup().addTo(map),
 tiere: L.layerGroup().addTo(map),
-wasser: L.layerGroup().addTo(map),
 strand: L.layerGroup().addTo(map)
 };
 var routeLayer = L.layerGroup().addTo(map);
@@ -120,6 +121,7 @@ iconAnchor:[15,30]
 var icons = {
 stellplatz: createEmojiIcon("🚐"),
 camping: createEmojiIcon("⛺"),
+wasser: createEmojiIcon("💧"),
 genuss: createEmojiIcon("☕"),
 shoppen: createEmojiIcon("🛍️"),
 wasserwunder: createEmojiIcon("🌊"),
@@ -127,12 +129,12 @@ abenteuer: createEmojiIcon("🧗"),
 kultur: createEmojiIcon("🏰"),
 natur: createEmojiIcon("🌲"),
 tiere: createEmojiIcon("🐾"),
-wasser: createEmojiIcon("💧"),
 strand: createEmojiIcon("🛶")
 };
 var popupInfos = {
 stellplatz: '🚐 Stellplatz',
 camping: '⛺ Campingplatz',
+wasser: '💧 Wasserstelle',
 genuss: '☕ Café / Restaurant / Eis',
 shoppen: '🛍️ Loppis / Rot-Kreuz / Bummeln',
 wasserwunder: '🌊 Wasserfall / See / Highlight',
@@ -140,7 +142,6 @@ abenteuer: '🧗 Aktivität & Abenteuer',
 kultur: '🏰 Kultur & Sehenswürdigkeit',
 natur: '🌲 Naturgebiet',
 tiere: '🐾 Tiere beobachten',
-wasser: '💧 Wasserstelle',
 strand: '🛶 Paddel-Highlight'
 };
 function resizeImage(file, maxWidth, callback) {
@@ -171,7 +172,7 @@ selected: true, timestamp: firebase.database.ServerValue.TIMESTAMP
 document.getElementById("photoInput").value = "";
 }
 map.on('click', function(e){
-var mainType = prompt("1 = Sehenswürdigkeit / Aktivität\n2 = Stellplatz 🚐\n3 = Campingplatz ⛺\n4 = Genuss & Café ☕\n5 = Loppis & Shoppen 🛍️\n6 = Wasserstelle 💧");
+var mainType = prompt("1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Wasserstelle 💧\n4 = Genuss & Café ☕\n5 = Loppis & Shoppen 🛍️\n6 = Sehenswürdigkeit / Aktivität");
 if(!mainType) return;
 var name = prompt("Name des Ortes:");
 if(!name) return;
@@ -180,7 +181,18 @@ var webLink = prompt("Webseite/Link (optional):","");
 var lieblingFrage = prompt("Ist das ein absoluter Lieblingsplatz? (ja / nein)", "nein");
 var isLiebling = (lieblingFrage && lieblingFrage.toLowerCase().trim() === "ja");
 var category="", text="", emoji="", hasStrom=false, hasWasser=false;
-if(mainType==1){
+if(mainType==1 || mainType==2){
+category = (mainType==1) ? "stellplatz" : "camping";
+emoji = (mainType==1) ? "🚐" : "⛺";
+var stromFrage = prompt("Gibt es Strom? (ja / nein)", "nein");
+var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", "nein");
+if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; }
+if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; }
+} 
+else if(mainType==3){ category="wasser"; emoji="💧"; }
+else if(mainType==4){ category="genuss"; emoji="☕"; }
+else if(mainType==5){ category="shoppen"; emoji="🛍️"; }
+else if(mainType==6){
 var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasserwunder 🌊\n4=Abenteuer & Action 🧗\n5=Tiere 🐾");
 if(subType==1){category="kultur"; emoji="🏰";}
 else if(subType==2){category="natur"; emoji="🌲";}
@@ -189,17 +201,6 @@ else if(subType==4){category="abenteuer"; emoji="🧗";}
 else if(subType==5){category="tiere"; emoji="🐾";}
 else return;
 } 
-else if(mainType==2 || mainType==3){
-category = (mainType==2) ? "stellplatz" : "camping";
-emoji = (mainType==2) ? "🚐" : "⛺";
-var stromFrage = prompt("Gibt es Strom? (ja / nein)", "nein");
-var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", "nein");
-if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; }
-if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; }
-} 
-else if(mainType==4){ category="genuss"; emoji="☕"; }
-else if(mainType==5){ category="shoppen"; emoji="🛍️"; }
-else if(mainType==6){ category="wasser"; emoji="💧"; }
 else return;
 var herzenZusatz = isLiebling ? " ❤️" : "";
 var ausstattungZusatz = "";
