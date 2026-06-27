@@ -106,7 +106,7 @@ natur: L.layerGroup().addTo(map),
 wasserwunder: L.layerGroup().addTo(map),
 abenteuer: L.layerGroup().addTo(map),
 tiere: L.layerGroup().addTo(map),
-strand: L.layerGroup().addTo(map) // Für Abwärtskompatibilität alter Marker
+strand: L.layerGroup().addTo(map)
 };
 var routeLayer = L.layerGroup().addTo(map);
 function createEmojiIcon(emoji){
@@ -129,8 +129,8 @@ tiere: createEmojiIcon("🐾"),
 strand: createEmojiIcon("🛶")
 };
 var popupInfos = {
-stellplatz: '💡 Stellplatz verfügbar',
-camping: '⛺ Campingplatz (Ausstattung beachten)',
+stellplatz: '💡 Stellplatz-Details',
+camping: '⛺ Campingplatz-Details',
 wasser: '💧 Frisches Wasser verfügbar',
 kultur: '🏰 Öffnungszeiten beachten',
 natur: '🌲 Naturgebiet',
@@ -162,7 +162,7 @@ callback(dataUrl);
 };
 };
 }
-function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData) {
+function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser) {
 if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) {
 webLink = 'https://' + webLink;
 }
@@ -176,6 +176,8 @@ name: name,
 ownInfo: ownInfo,
 webLink: webLink || "",
 photo: photoData,
+hasStrom: hasStrom || false,
+hasWasser: hasWasser || false,
 selected: true,
 timestamp: firebase.database.ServerValue.TIMESTAMP
 });
@@ -188,7 +190,7 @@ var name = prompt("Name des Ortes:");
 if(!name) return;
 var ownInfo = prompt("Eigene Info (optional):","");
 var webLink = prompt("Webseite/Link einfügen (optional):","");
-var category="", text="";
+var category="", text="", hasStrom=false, hasWasser=false;
 if(mainType==1){
 var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasserwunder 🌊\n4=Abenteuer & Action 🧗\n5=Tiere 🐾");
 if(subType==1){category="kultur"; text="🏰 " + name;}
@@ -197,17 +199,24 @@ else if(subType==3){category="wasserwunder"; text="🌊 " + name;}
 else if(subType==4){category="abenteuer"; text="🧗 " + name;}
 else if(subType==5){category="tiere"; text="🐾 " + name;}
 else return;
-} else if(mainType==2){category="stellplatz"; text="🚐 " + name;}
-else if(mainType==3){category="wasser"; text="💧 " + name;}
-else if(mainType==4){category="camping"; text="⛺ " + name;}
+} else if(mainType==2 || mainType==4){
+category = (mainType==2) ? "stellplatz" : "camping";
+var emoji = (mainType==2) ? "🚐 " : "⛺ ";
+var stromFrage = prompt("Gibt es Strom? (ja / nein)", "nein");
+var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", "nein");
+var zusatzIcons = "";
+if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; zusatzIcons += "⚡"; }
+if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; zusatzIcons += "💧"; }
+text = emoji + name + (zusatzIcons ? " " + zusatzIcons : "");
+} else if(mainType==3){category="wasser"; text="💧 " + name;}
 else return;
 var fileInput = document.getElementById("photoInput");
 if(fileInput.files.length > 0){
 resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData);
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
     });
 } else {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "");
+saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
 }
 });
 database.ref('markers').on('value', function(snapshot) {
@@ -220,13 +229,20 @@ if (data) {
 Object.keys(data).forEach(key => {
 var item = data[key];
 item.key = key;
+var ausstattungText = "";
+if(item.category === "stellplatz" || item.category === "camping") {
+ausstattungText = `<div class="popup-info" style="margin-top:5px; font-weight:bold; color:#bc6c25;">` +
+`Ausstattung: ${item.hasStrom ? '⚡ Strom' : '❌ kein Strom'} | ${item.hasWasser ? '💧 Wasser' : '❌ kein Wasser'}` +
+`</div>`;
+}
 var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
 `<div class="popup-content">
 <div class="popup-icon">${item.text.split(" ")[0]}</div>
 <div style="margin-left: 5px;">
 <div><strong style="color:#bc6c25; font-size:14px;">${item.name || item.text.substring(item.text.indexOf(" ") + 1)}</strong></div>
 <div class="popup-info">${popupInfos[item.category]}</div>
-${item.ownInfo ? `<div class="popup-info" style="font-style: italic; color:#606c38;">📝 ${item.ownInfo}</div>` : ""}
+${ausstattungText}
+${item.ownInfo ? `<div class="popup-info" style="font-style: italic; color:#606c38; margin-top:4px;">📝 ${item.ownInfo}</div>` : ""}
 ${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
 ${item.photo ? `<img src="${item.photo}" style="width:150px; max-height:150px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
 </div>
@@ -281,12 +297,26 @@ if (newLink === null) return;
 if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) {
 newLink = 'https://' + newLink;
 }
+var currentStrom = markerData.hasStrom || false;
+var currentWasser = markerData.hasWasser || false;
+if(markerData.category === "stellplatz" || markerData.category === "camping") {
+var stromFrage = prompt("Gibt es Strom? (ja / nein)", currentStrom ? "ja" : "nein");
+var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", currentWasser ? "ja" : "nein");
+currentStrom = (stromFrage && stromFrage.toLowerCase().trim() === "ja");
+currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
+}
 var emoji = markerData.text.split(" ")[0];
+var zusatzIcons = "";
+if(currentStrom) zusatzIcons += "⚡";
+if(currentWasser) zusatzIcons += "💧";
+var fullText = emoji + " " + newName + (zusatzIcons ? " " + zusatzIcons : "");
 database.ref('markers/' + key).update({
 name: newName,
-text: emoji + " " + newName,
+text: fullText,
 ownInfo: newInfo,
-webLink: newLink
+webLink: newLink,
+hasStrom: currentStrom,
+hasWasser: currentWasser
 });
 }
 function deleteMarker(key){
