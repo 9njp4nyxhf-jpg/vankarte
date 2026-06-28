@@ -11,9 +11,25 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <style>
-body { margin:0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#f7f5f0; color: #4a3f35; }
-#map { height: 65vh; background: #e5e2db; border-bottom: 3px solid #d4a373; }
-#controls { padding: 10px 15px; background: #faf7f2; box-shadow: 0 -3px 10px rgba(0,0,0,0.05); border-radius: 12px 12px 0 0; position: relative; margin-top: -12px; z-index: 1000; }
+body { margin:0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#f7f5f0; color: #4a3f35; overflow: hidden; }
+#map { height: 100vh; width: 100vw; background: #e5e2db; position: absolute; top: 0; left: 0; z-index: 1; }
+#controls { 
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000;
+    background: #faf7f2; box-shadow: 0 -3px 15px rgba(0,0,0,0.1); 
+    border-radius: 16px 16px 0 0; 
+    transition: transform 0.3s ease-in-out;
+    transform: translateY(0);
+}
+#controls.collapsed {
+    transform: translateY(calc(100% - 30px));
+}
+#toggle-bar {
+    height: 30px; background: #dda15e; border-radius: 16px 16px 0 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: white; font-size: 12px; font-weight: bold;
+}
+#toggle-bar:hover { background: #bc6c25; }
+.controls-content { padding: 10px 15px 15px 15px; max-height: 40vh; overflow-y: auto; }
 .section-title { color: #bc6c25; font-size: 13px; font-weight: bold; margin-bottom: 6px; display: inline-block; }
 .filter-container { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 label { white-space: nowrap; display: inline-flex; align-items: center; background: #fff; padding: 4px 8px; border-radius: 15px; border: 1px solid #e6dfd3; font-size: 11px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); cursor: pointer; transition: all 0.2s; }
@@ -24,7 +40,7 @@ button { background-color: #dda15e; color: white; border: none; padding: 6px 12p
 button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,0.4); }
 .photo-box { font-size: 11px; color: #6b5e4f; background: #fff; padding: 5px 10px; border-radius: 12px; border: 1px solid #e6dfd3; display: inline-flex; align-items: center; }
 #photoInput { font-size: 11px; margin-left: 5px; color: #6b5e4f; max-width: 130px; }
-#routeList { max-height: 100px; overflow-y: auto; border: 1px solid #e6dfd3; padding: 6px; background: #f1ede2; border-radius: 10px; font-size: 11px; }
+#routeList { max-height: 90px; overflow-y: auto; border: 1px solid #e6dfd3; padding: 6px; background: #f1ede2; border-radius: 10px; font-size: 11px; }
 .route-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; background: #fff; padding: 4px 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); border-left: 3px solid #dda15e; }
 .route-item:last-child { margin-bottom: 0; }
 .route-item button { margin-left: 2px; cursor: pointer; border: none; background: none; font-size: 13px; padding: 0 2px; box-shadow: none; color: #4a3f35; }
@@ -38,17 +54,19 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 .link-btn:hover { background-color: #606c38; }
 .leaflet-popup-content-wrapper { border-radius: 16px; background: #fdfbf7; color: #4a3f35; border: 1px solid #e6dfd3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .leaflet-popup-tip { background: #fdfbf7; }
-.leaflet-control-geocoder { border-radius: 20px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; border: 1px solid #e6dfd3 !important; overflow: hidden; }
+.leaflet-control-geocoder { border-radius: 20px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; border: 1px solid #e6dfd3 !important; overflow: hidden; margin-top: 10px !important; }
 .leaflet-control-geocoder-form input { font-size: 13px; padding: 6px; background: #fdfbf7; }
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div id="controls">
-<div class="section-title">🌾 Wilmas Entdecker-Filter:</div>
+<div id="toggle-bar" onclick="toggleControls()">🌾 Menü ausblenden 🔽</div>
+<div class="controls-content">
+<div class="section-title">Filter:</div>
 <div class="filter-container">
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
-<label><input type="checkbox" checked onchange="checked" onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
+<label><input type="checkbox" checked onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
 <label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasserstelle</label>
 <label><input type="checkbox" checked onchange="toggleCategory('genuss')"> ☕ Genuss & Café</label>
 <label><input type="checkbox" checked onchange="toggleCategory('shoppen')"> 👜 Bummeln</label>
@@ -67,6 +85,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 </div>
 <div id="routeList"></div>
 </div>
+</div>
 <script>
 const orsApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk3YTlkMmYwYTRiYTQ3MjdiNzQyZjMyODNlMDk2N2I2IiwiaCI6Im11cm11cjY0In0=";
 const firebaseConfig = {
@@ -82,14 +101,18 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 var map = L.map('map').setView([54, 15], 4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors'}).addTo(map);
+
 if (navigator.geolocation) {
 navigator.geolocation.getCurrentPosition(function(position) {
 var lat = position.coords.latitude;
 var lng = position.coords.longitude;
-L.marker([lat, lng]).addTo(map).bindPopup("📍 Du bist hier").openPopup();
+L.circleMarker([lat, lng], {
+    radius: 9, fillColor: '#3388ff', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
+}).addTo(map).bindPopup("📍 Hier bist du gerade");
 map.setView([lat, lng], 9);
 }, function(err) { console.log("GPS nicht verfügbar"); });
 }
+
 L.Control.geocoder({
 defaultMarkGeocode: false,
 placeholder: "🔍 Ort suchen...",
@@ -102,6 +125,7 @@ map.fitBounds(poly.getBounds());
 L.popup().setLatLng(e.geocode.center).setContent("📌 " + e.geocode.name).openOn(map);
 })
 .addTo(map);
+
 var markersArray = [];
 var categoryLayers = {
 stellplatz: L.layerGroup().addTo(map),
@@ -117,6 +141,7 @@ tiere: L.layerGroup().addTo(map),
 strand: L.layerGroup().addTo(map)
 };
 var routeLayer = L.layerGroup().addTo(map);
+
 function createEmojiIcon(emoji){
 return L.divIcon({
 html:`<div style="font-size:24px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.15));">${emoji}</div>`,
@@ -151,6 +176,19 @@ natur: '🌲 Naturgebiet',
 tiere: '🐾 Tiere beobachten',
 strand: '🛶 Paddel-Highlight'
 };
+
+function toggleControls() {
+    var panel = document.getElementById('controls');
+    var bar = document.getElementById('toggle-bar');
+    if (panel.classList.contains('collapsed')) {
+        panel.classList.remove('collapsed');
+        bar.innerHTML = "🌾 Menü ausblenden 🔽";
+    } else {
+        panel.classList.add('collapsed');
+        bar.innerHTML = "🌾 Menü einblenden 🔼";
+    }
+}
+
 function resizeImage(file, maxWidth, callback) {
 var reader = new FileReader();
 reader.readAsDataURL(file);
