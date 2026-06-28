@@ -94,7 +94,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 <input type="file" id="importInput" accept=".json" style="display:none;" onchange="uploadBackup(this)">
 </div>
 <div class="photo-box">
-📸 <span>Foto:</span>
+📸 <span>Foto für neuen Ort:</span>
 <input type="file" id="photoInput" accept="image/*">
 </div>
 </div>
@@ -340,8 +340,11 @@ routeDiv.appendChild(div);
 });
 }
 function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
+
 function editMarker(key) {
 var markerData = markersArray.find(m => m.key === key); if (!markerData) return;
+map.closePopup(); // Schließt das Popup, damit man das Menü unten sieht
+
 var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Wasserstelle 💧\n4 = Genuss & Café ☕\n5 = Bummeln 👜\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasserwunder 🌊\n9 = Abenteuer 🚶\n10 = Tiere 🐾", "");
 if (catPrompt === null) return;
 var currentCategory = markerData.category; var emoji = markerData.text.split(" ")[0];
@@ -371,16 +374,42 @@ currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
 } else { currentStrom = false; currentWasser = false; }
 var ausstattungZusatz = ""; if(currentStrom) ausstattungZusatz += "⚡"; if(currentWasser) ausstattungZusatz += "💧";
 var fullText = emoji + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
-var fileInput = document.getElementById("photoInput");
-if(fileInput.files.length > 0) {
-resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-database.ref('markers/' + key).update({ category: currentCategory, name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser, photo: resizedPhotoData });
-document.getElementById("photoInput").value = "";
-    });
+
+// FOTO-WECHSEL-LOGIK START
+var changePhoto = confirm("Möchtest du das FOTO für diesen Ort ändern oder ein neues hinzufügen?");
+if(changePhoto) {
+    alert("Bitte wähle jetzt im Menü unten rechts unter 'Foto für neuen Ort' dein neues Bild aus. Danach wird der Ort automatisch aktualisiert!");
+    
+    // Klappt das Menü aus, falls es eingeklappt ist
+    var panel = document.getElementById('controls');
+    if (panel.classList.contains('collapsed')) { toggleControls(); }
+    
+    var fileInput = document.getElementById("photoInput");
+    fileInput.onchange = function() {
+        if(fileInput.files.length > 0) {
+            resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
+                database.ref('markers/' + key).update({ 
+                    category: currentCategory, name: newName, text: fullText, 
+                    ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
+                    hasWasser: currentWasser, photo: resizedPhotoData 
+                });
+                document.getElementById("photoInput").value = "";
+                fileInput.onchange = null; // Setzt den Eventlistener zurück
+                alert("Foto erfolgreich geändert!");
+            });
+        }
+    };
 } else {
-database.ref('markers/' + key).update({ category: currentCategory, name: newName, text: fullText, ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, hasWasser: currentWasser });
+    // Wenn kein Foto geändert wird, speichern wir einfach die restlichen Änderungen ab
+    database.ref('markers/' + key).update({ 
+        category: currentCategory, name: newName, text: fullText, 
+        ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
+        hasWasser: currentWasser 
+    });
 }
+// FOTO-WECHSEL-LOGIK ENDE
 }
+
 function deleteMarker(key){ if(confirm("Möchtest du diesen Ort wirklich löschen?")) { database.ref('markers/' + key).remove(); } }
 
 function downloadBackup() {
