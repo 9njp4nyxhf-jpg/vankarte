@@ -38,6 +38,8 @@ label:hover { background: #f4efe6; border-color: #d4a373; }
 .action-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 button { background-color: #dda15e; color: white; border: none; padding: 6px 12px; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 11px; box-shadow: 0 1px 4px rgba(221,161,94,0.3); transition: all 0.2s; }
 button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,0.4); }
+.btn-backup { background-color: #606c38; box-shadow: 0 1px 4px rgba(96,108,56,0.3); }
+.btn-backup:hover { background-color: #283618; }
 .photo-box { font-size: 11px; color: #6b5e4f; background: #fff; padding: 5px 10px; border-radius: 12px; border: 1px solid #e6dfd3; display: inline-flex; align-items: center; }
 #photoInput { font-size: 11px; margin-left: 5px; color: #6b5e4f; max-width: 130px; }
 #routeList { max-height: 90px; overflow-y: auto; border: 1px solid #e6dfd3; padding: 6px; background: #f1ede2; border-radius: 10px; font-size: 11px; }
@@ -80,7 +82,12 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 <label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
 </div>
 <div class="action-row">
+<div>
 <button onclick="calculateRoute()">🛣️ Route berechnen</button>
+<button onclick="downloadBackup()" class="btn-backup" title="Sicherung auf Gerät laden">📥 Backup erstellen</button>
+<button onclick="document.getElementById('importInput').click()" class="btn-backup" title="Sicherung wiederherstellen">📤 Sicherung laden</button>
+<input type="file" id="importInput" accept=".json" style="display:none;" onchange="uploadBackup(this)">
+</div>
 <div class="photo-box">
 📸 <span>Foto:</span>
 <input type="file" id="photoInput" accept="image/*">
@@ -370,6 +377,41 @@ database.ref('markers/' + key).update({ category: currentCategory, name: newName
 }
 }
 function deleteMarker(key){ if(confirm("Möchtest du diesen Ort wirklich löschen?")) { database.ref('markers/' + key).remove(); } }
+
+function downloadBackup() {
+    database.ref('markers').once('value').then(snapshot => {
+        const data = snapshot.val();
+        if (!data) { alert("Keine Daten zum Sichern vorhanden!"); return; }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "vankarte_sicherung_" + new Date().toISOString().slice(0,10) + ".json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    });
+}
+
+function uploadBackup(input) {
+    if (input.files.length === 0) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            if (confirm("Möchtest du die Sicherung jetzt einspielen? Fehlende Orte werden in Firebase wiederhergestellt.")) {
+                Object.keys(importedData).forEach(key => {
+                    database.ref('markers/' + key).set(importedData[key]);
+                });
+                alert("Sicherung erfolgreich geladen!");
+                input.value = "";
+            }
+        } catch (err) {
+            alert("Fehler beim Lesen der Datei. Ist es eine gültige Sicherungsdatei?");
+        }
+    };
+    reader.readAsText(file);
+}
 </script>
 </body>
 </html>
