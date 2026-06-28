@@ -46,8 +46,11 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 .route-item button { margin-left: 2px; cursor: pointer; border: none; background: none; font-size: 13px; padding: 0 2px; box-shadow: none; color: #4a3f35; }
 .route-item button:hover { background: #f4efe6; color: #bc6c25; }
 .popup-content { display: flex; flex-direction: column; padding: 4px; background: transparent; max-width: 220px; }
-.popup-header-box { display: flex; align-items: center; margin-bottom: 6px; }
+.popup-header-box { display: flex; align-items: center; margin-bottom: 6px; justify-content: space-between; }
+.popup-title-area { display: flex; align-items: center; }
 .popup-icon { font-size: 24px; margin-right: 10px; background: #f4efe6; padding: 6px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
+.popup-edit-btn { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px; border-radius: 50%; transition: background 0.2s; box-shadow: none; margin-left: 8px; }
+.popup-edit-btn:hover { background: #e6dfd3; }
 .popup-info { margin-top: 2px; font-size: 12px; color: #6b5e4f; }
 .popup-notes { margin-top: 6px; font-size: 12px; color: #554a3e; background: #f5f0e6; padding: 8px; border-radius: 8px; border-left: 3px solid #bc6c25; white-space: pre-wrap; line-height: 1.4; }
 .link-btn { display: inline-block; margin-top: 8px; padding: 5px 10px; background-color: #bc6c25; color: white !important; text-decoration: none; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(188,108,37,0.2); text-align: center; }
@@ -274,11 +277,14 @@ ausstattungText = `<div class="popup-info" style="margin-top:4px; font-weight:bo
 var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
 `<div class="popup-content">
 <div class="popup-header-box">
+<div class="popup-title-area">
 <div class="popup-icon">${item.text.split(" ")[0]}</div>
 <div>
 <strong style="color:#bc6c25; font-size:14px;">${item.name || item.text.substring(item.text.indexOf(" ")+1)}</strong>
 <div class="popup-info">${popupInfos[item.category]}</div>
 </div>
+</div>
+<button class="popup-edit-btn" onclick="editMarker('${item.key}')" title="Bearbeiten">✏️</button>
 </div>
 ${ausstattungText}
 ${item.ownInfo ? `<div class="popup-notes">📝 ${item.ownInfo}</div>` : ""}
@@ -286,6 +292,11 @@ ${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn
 ${item.photo ? `<img src="${item.photo}" style="width:100%; max-height:140px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
 </div>`
 ).addTo(categoryLayers[item.category]);
+
+marker.on('contextmenu', function() {
+    editMarker(item.key);
+});
+
 item.leafletMarker = marker; markersArray.push(item);
 });
 }
