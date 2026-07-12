@@ -47,6 +47,8 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 .btn-backup:hover { background-color: #283618; }
 .photo-box { font-size: 11px; color: #6b5e4f; background: #fff; padding: 5px 10px; border-radius: 12px; border: 1px solid #e6dfd3; display: inline-flex; align-items: center; }
 #photoInput { font-size: 11px; margin-left: 5px; color: #6b5e4f; max-width: 130px; }
+.search-box { width: 100%; box-sizing: border-box; padding: 6px 12px; border-radius: 15px; border: 1px solid #e6dfd3; font-size: 11px; margin-bottom: 8px; background: #fff; color: #4a3f35; }
+.search-box:focus { outline: none; border-color: #bc6c25; }
 #routeList { max-height: 90px; overflow-y: auto; border: 1px solid #e6dfd3; padding: 6px; background: #f1ede2; border-radius: 10px; font-size: 11px; }
 .route-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; background: #fff; padding: 4px 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); border-left: 3px solid #dda15e; }
 .route-item:last-child { margin-bottom: 0; }
@@ -56,8 +58,9 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 .popup-header-box { display: flex; align-items: center; margin-bottom: 6px; justify-content: space-between; }
 .popup-title-area { display: flex; align-items: center; }
 .popup-icon { font-size: 24px; margin-right: 10px; background: #f4efe6; padding: 6px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
-.popup-edit-btn { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px; border-radius: 50%; transition: background 0.2s; box-shadow: none; margin-left: 8px; }
-.popup-edit-btn:hover { background: #e6dfd3; }
+.popup-actions { display: flex; gap: 2px; }
+.popup-action-btn { background: none; border: none; font-size: 15px; cursor: pointer; padding: 4px; border-radius: 50%; transition: background 0.2s; box-shadow: none; }
+.popup-action-btn:hover { background: #e6dfd3; }
 .popup-info { margin-top: 2px; font-size: 12px; color: #6b5e4f; }
 .popup-notes { margin-top: 6px; font-size: 12px; color: #554a3e; background: #f5f0e6; padding: 8px; border-radius: 8px; border-left: 3px solid #bc6c25; white-space: pre-wrap; line-height: 1.4; }
 .link-btn { display: inline-block; margin-top: 8px; padding: 5px 10px; background-color: #bc6c25; color: white !important; text-decoration: none; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(188,108,37,0.2); text-align: center; }
@@ -77,10 +80,10 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 <div class="filter-container">
 <label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
 <label><input type="checkbox" checked onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
-<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Wasserstelle</label>
-<label><input type="checkbox" checked onchange="toggleCategory('genuss')"> ☕ Genuss & Café</label>
+<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Frischwasser</label>
+<label><input type="checkbox" checked onchange="toggleCategory('genuss')"> ☕ Essen</label>
 <label><input type="checkbox" checked onchange="toggleCategory('shoppen')"> 👜 Bummeln</label>
-<label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasserwunder</label>
+<label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasser</label>
 <label><input type="checkbox" checked onchange="toggleCategory('abenteuer')"> 🚶 Abenteuer</label>
 <label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
 <label><input type="checkbox" checked onchange="toggleCategory('natur')"> 🌲 Natur</label>
@@ -98,6 +101,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 <input type="file" id="photoInput" accept="image/*">
 </div>
 </div>
+<input type="text" id="searchBox" class="search-box" placeholder="🔍 Eigene Orte filtern..." oninput="renderRouteList()">
 <div id="routeList"></div>
 </div>
 </div>
@@ -179,10 +183,10 @@ tiere: createEmojiIcon("🐾")
 var popupInfos = {
 stellplatz: '🚐 Stellplatz',
 camping: '⛺ Campingplatz',
-wasser: '💧 Wasserstelle',
-genuss: '☕ Café / Restaurant / Eis',
+wasser: '💧 Frischwasser',
+genuss: '☕ Essen',
 shoppen: '👜 Bummeln',
-wasserwunder: '🌊 Wasserfall / See / Highlight',
+wasserwunder: '🌊 Wasser',
 abenteuer: '🚶 Aktivität & Abenteuer',
 kultur: '🏰 Kultur & Sehenswürdigkeit',
 natur: '🌲 Naturgebiet',
@@ -229,7 +233,7 @@ selected: true, timestamp: firebase.database.ServerValue.TIMESTAMP
 document.getElementById("photoInput").value = "";
 }
 map.on('click', function(e){
-var mainType = prompt("1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Wasserstelle 💧\n4 = Genuss & Café ☕\n5 = Bummeln 👜\n6 = Sehenswürdigkeit / Aktivität");
+var mainType = prompt("1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Frischwasser 💧\n4 = Essen ☕\n5 = Bummeln 👜\n6 = Sehenswürdigkeit / Aktivität");
 if(!mainType) return;
 var name = prompt("Name des Ortes:");
 if(!name) return;
@@ -248,7 +252,7 @@ else if(mainType==3){ category="wasser"; emoji="💧"; }
 else if(mainType==4){ category="genuss"; emoji="☕"; }
 else if(mainType==5){ category="shoppen"; emoji="👜"; }
 else if(mainType==6){
-var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasserwunder 🌊\n4=Abenteuer & Action 🚶\n5=Tiere 🐾");
+var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasser 🌊\n4=Abenteuer & Action 🚶\n5=Tiere 🐾");
 if(subType==1){category="kultur"; emoji="🏰";}
 else if(subType==2){category="natur"; emoji="🌲";}
 else if(subType==3){category="wasserwunder"; emoji="🌊";}
@@ -293,7 +297,10 @@ var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPo
 <div class="popup-info">${popupInfos[item.category]}</div>
 </div>
 </div>
-<button class="popup-edit-btn" onclick="editMarker('${item.key}')" title="Bearbeiten">✏️</button>
+<div class="popup-actions">
+<button class="popup-action-btn" onclick="editMarker('${item.key}')" title="Bearbeiten">✏️</button>
+<button class="popup-action-btn" onclick="deleteMarker('${item.key}')" title="Löschen">🗑️</button>
+</div>
 </div>
 ${ausstattungText}
 ${item.ownInfo ? `<div class="popup-notes">📝 ${item.ownInfo}</div>` : ""}
@@ -324,7 +331,15 @@ routeLayer.clearLayers(); L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacit
 }
 function renderRouteList(){
 const routeDiv = document.getElementById('routeList'); routeDiv.innerHTML = '';
+const searchVal = document.getElementById('searchBox').value.toLowerCase().trim();
+
 markersArray.forEach((m,i)=>{
+const matchesSearch = !searchVal || 
+                      m.text.toLowerCase().includes(searchVal) || 
+                      (m.ownInfo && m.ownInfo.toLowerCase().includes(searchVal));
+
+if (!matchesSearch) return;
+
 const div = document.createElement('div'); div.className = 'route-item';
 div.innerHTML = `
 <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)" style="accent-color: #bc6c25;">
@@ -342,7 +357,7 @@ function editMarker(key) {
 var markerData = markersArray.find(m => m.key === key); if (!markerData) return;
 map.closePopup();
 
-var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Wasserstelle 💧\n4 = Genuss & Café ☕\n5 = Bummeln 👜\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasserwunder 🌊\n9 = Abenteuer 🚶\n10 = Tiere 🐾", "");
+var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Frischwasser 💧\n4 = Essen ☕\n5 = Bummeln 👜\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasser 🌊\n9 = Abenteuer 🚶\n10 = Tiere 🐾", "");
 if (catPrompt === null) return;
 var currentCategory = markerData.category; var emoji = markerData.text.split(" ")[0];
 if(catPrompt.trim() !== "") {
@@ -403,7 +418,12 @@ if(changePhoto) {
 }
 }
 
-function deleteMarker(key){ if(confirm("Möchtest du diesen Ort wirklich löschen?")) { database.ref('markers/' + key).remove(); } }
+function deleteMarker(key){ 
+    map.closePopup();
+    if(confirm("Möchtest du diesen Ort wirklich löschen?")) { 
+        database.ref('markers/' + key).remove(); 
+    } 
+}
 
 function downloadBackup() {
     database.ref('markers').once('value').then(snapshot => {
