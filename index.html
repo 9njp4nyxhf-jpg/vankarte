@@ -228,13 +228,13 @@ function resizeImage(file, maxWidth, callback) {
   };
 }
 
-function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser) {
+function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser, hasWC) {
   if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) { webLink = 'https://' + webLink; }
   const newMarkerRef = database.ref('markers').push();
   newMarkerRef.set({
     lat: latlng.lat, lng: latlng.lng, category: category, text: text, name: name,
     ownInfo: ownInfo || "", webLink: webLink || "", photo: photoData || "",
-    hasStrom: hasStrom || false, hasWasser: hasWasser || false,
+    hasStrom: hasStrom || false, hasWasser: hasWasser || false, hasWC: hasWC || false,
     selected: true, timestamp: firebase.database.ServerValue.TIMESTAMP
   });
   document.getElementById("photoInput").value = "";
@@ -247,15 +247,17 @@ map.on('click', function(e){
   if(!name) return;
   var ownInfo = prompt("Notizen / Kurze Info zu diesem Ort:");
   var webLink = prompt("Webseite/Link (optional):","");
-  var category="", text="", emoji="", hasStrom=false, hasWasser=false;
+  var category="", text="", emoji="", hasStrom=false, hasWasser=false, hasWC=false;
 
   if(mainType==1 || mainType==2){
     category = (mainType==1) ? "stellplatz" : "camping";
     emoji = (mainType==1) ? "🚐" : "⛺";
     var stromFrage = prompt("Gibt es Strom? (ja / nein)", "nein");
     var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", "nein");
+    var wcFrage = prompt("Gibt es Toiletten? (ja / nein)", "nein");
     if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; }
     if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; }
+    if(wcFrage && wcFrage.toLowerCase().trim() === "ja") { hasWC = true; }
   } else if(mainType==3){ category="wasser"; emoji="💧"; }
   else if(mainType==4){ category="genuss"; emoji="☕"; }
   else if(mainType==5){ category="shoppen"; emoji="👜"; }
@@ -272,15 +274,16 @@ map.on('click', function(e){
   var ausstattungZusatz = "";
   if(hasStrom) ausstattungZusatz += "⚡";
   if(hasWasser) ausstattungZusatz += "💧";
+  if(hasWC) ausstattungZusatz += "🚽";
   text = emoji + " " + name + (ausstattungZusatz ? " " + ausstattungZusatz : "");
 
   var fileInput = document.getElementById("photoInput");
   if(fileInput.files.length > 0){
     resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-      saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
+      saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser, hasWC);
     });
   } else {
-    saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
+    saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser, hasWC);
   }
 });
 
@@ -295,7 +298,7 @@ database.ref('markers').on('value', function(snapshot) {
       var ausstattungText = "";
       if(item.category === "stellplatz" || item.category === "camping") {
         ausstattungText = `<div class="popup-info" style="margin-top:4px; font-weight:bold; color:#bc6c25;">` +
-        `Ausstattung: ${item.hasStrom ? '⚡ Strom' : '❌ kein Strom'} | ${item.hasWasser ? '💧 Wasser' : '❌ kein Wasser'}` +
+        `Ausstattung: ${item.hasStrom ? '⚡ Strom' : '❌ Strom'} | ${item.hasWasser ? '💧 Wasser' : '❌ Wasser'} | ${item.hasWC ? '🚽 WC' : '❌ WC'}` +
         `</div>`;
       }
 
@@ -411,16 +414,25 @@ function editMarker(key) {
 
   var currentStrom = markerData.hasStrom || false; 
   var currentWasser = markerData.hasWasser || false;
+  var currentWC = markerData.hasWC || false;
+
   if(currentCategory === "stellplatz" || currentCategory === "camping") {
     var stromFrage = prompt("Gibt es Strom? (ja / nein)", currentStrom ? "ja" : "nein");
     var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", currentWasser ? "ja" : "nein");
+    var wcFrage = prompt("Gibt es Toiletten? (ja / nein)", currentWC ? "ja" : "nein");
     currentStrom = (stromFrage && stromFrage.toLowerCase().trim() === "ja");
     currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
-  } else { currentStrom = false; currentWasser = false; }
+    currentWC = (wcFrage && wcFrage.toLowerCase().trim() === "ja");
+  } else { 
+    currentStrom = false; 
+    currentWasser = false; 
+    currentWC = false; 
+  }
 
   var ausstattungZusatz = ""; 
   if(currentStrom) ausstattungZusatz += "⚡"; 
   if(currentWasser) ausstattungZusatz += "💧";
+  if(currentWC) ausstattungZusatz += "🚽";
   var fullText = emoji + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
 
   var changePhoto = confirm("Möchtest du das FOTO für diesen Ort ändern oder ein neues hinzufügen?");
@@ -435,7 +447,7 @@ function editMarker(key) {
                   database.ref('markers/' + key).update({ 
                       category: currentCategory, name: newName, text: fullText, 
                       ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
-                      hasWasser: currentWasser, photo: resizedPhotoData 
+                      hasWasser: currentWasser, hasWC: currentWC, photo: resizedPhotoData 
                   });
                   document.getElementById("photoInput").value = "";
                   fileInput.onchange = null;
@@ -447,7 +459,7 @@ function editMarker(key) {
       database.ref('markers/' + key).update({ 
           category: currentCategory, name: newName, text: fullText, 
           ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
-          hasWasser: currentWasser 
+          hasWasser: currentWasser, hasWC: currentWC 
       });
   }
 }
