@@ -91,7 +91,7 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 </div>
 <div class="action-row">
 <div>
-<button onclick="calculateRoute()">🛣️ Route berechnen</button>
+<button onclick="openGoogleMapsRoute()">🗺️ Route in Google Maps öffnen</button>
 <button onclick="downloadBackup()" class="btn-backup" title="Sicherung auf Gerät laden">📥 Backup erstellen</button>
 <button onclick="document.getElementById('importInput').click()" class="btn-backup" title="Sicherung wiederherstellen">📤 Sicherung laden</button>
 <input type="file" id="importInput" accept=".json" style="display:none;" onchange="uploadBackup(this)">
@@ -106,7 +106,6 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 </div>
 </div>
 <script>
-const orsApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk3YTlkMmYwYTRiYTQ3MjdiNzQyZjMyODNlMDk2N2I2IiwiaCI6Im11cm11cjY0In0=";
 const firebaseConfig = {
 apiKey: "AIzaSyC08G4qAOB3I9p7rHyT_IaA9phN1SlmKcw",
 authDomain: "van-karte.firebaseapp.com",
@@ -158,7 +157,6 @@ kultur: L.layerGroup().addTo(map),
 natur: L.layerGroup().addTo(map),
 tiere: L.layerGroup().addTo(map)
 };
-var routeLayer = L.layerGroup().addTo(map);
 
 function createEmojiIcon(emoji){
 return L.divIcon({
@@ -319,16 +317,36 @@ item.leafletMarker = marker; markersArray.push(item);
 renderRouteList();
 });
 function toggleCategory(cat){ map.hasLayer(categoryLayers[cat]) ? map.removeLayer(categoryLayers[cat]) : map.addLayer(categoryLayers[cat]); }
-function calculateRoute(){
-var selectedMarkers = markersArray.filter(m=>m.selected);
-if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
-var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
-fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
-method:'POST', headers:{'Authorization':orsApiKey,'Content-Type':'application/json'}, body:JSON.stringify({coordinates:coords})
-}).then(r=>r.json()).then(data=>{
-routeLayer.clearLayers(); L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacity:0.85}}).addTo(routeLayer);
-}).catch(err=>{console.error(err); alert("Fehler bei Route!");});
+
+function openGoogleMapsRoute(){
+    var selectedMarkers = markersArray.filter(m=>m.selected);
+    if(selectedMarkers.length < 2){
+        alert("Bitte wähle unten in der Liste mindestens 2 Orte aus, um eine Route zu erstellen!"); 
+        return;
+    }
+    
+    // Startort ist der erste ausgewählte Punkt
+    var origin = selectedMarkers[0].lat + "," + selectedMarkers[0].lng;
+    // Zielort ist der letzte ausgewählte Punkt
+    var destination = selectedMarkers[selectedMarkers.length - 1].lat + "," + selectedMarkers[selectedMarkers.length - 1].lng;
+    
+    // Alle Punkte dazwischen sind Wegpunkte (Zwischenstopps)
+    var waypoints = "";
+    if(selectedMarkers.length > 2) {
+        var intermediate = selectedMarkers.slice(1, selectedMarkers.length - 1);
+        waypoints = intermediate.map(m => m.lat + "," + m.lng).join("|");
+    }
+    
+    // Google Maps URL zusammensetzen
+    var mapsUrl = "https://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + destination;
+    if(waypoints !== "") {
+        mapsUrl += "&waypoints=" + encodeURIComponent(waypoints);
+    }
+    
+    // In neuem Tab bzw. der Google Maps App öffnen
+    window.open(mapsUrl, '_blank');
 }
+
 function renderRouteList(){
 const routeDiv = document.getElementById('routeList'); routeDiv.innerHTML = '';
 const searchVal = document.getElementById('searchBox').value.toLowerCase().trim();
