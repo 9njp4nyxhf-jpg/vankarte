@@ -66,7 +66,7 @@
 
     /* Modal Dialog */
     .modal {
-      display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%;
+      display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
       background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;
     }
     .modal-content {
@@ -217,7 +217,7 @@ function buildPopupHtml(key, item) {
   return `
     <div style="min-width: 200px; font-family: sans-serif;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <h3 style="margin:0; font-size:16px; color:#bc6c25;">${item.title || 'Unbenannter Ort'}</h3>
+        <h3 style="margin:0; font-size:16px; color:#bc6c25;">${item.title || item.name || 'Unbenannter Ort'}</h3>
         <div>
           <span style="cursor:pointer; font-size:14px; margin-right:4px;" onclick="editPlace('${key}')" title="Bearbeiten">✏️</span>
           <span style="cursor:pointer; font-size:14px;" onclick="deletePlace('${key}')" title="Löschen">🗑️</span>
@@ -236,8 +236,8 @@ function buildPopupHtml(key, item) {
   `;
 }
 
-// Daten laden
-db.ref('places').on('value', (snapshot) => {
+// Daten laden - greift jetzt direkt auf 'markers' zu!
+db.ref('markers').on('value', (snapshot) => {
   allPlaces = snapshot.val() || {};
   renderMarkers();
 });
@@ -250,8 +250,10 @@ function renderMarkers() {
 
   Object.keys(allPlaces).forEach(key => {
     const item = allPlaces[key];
-    if (checkedCategories.includes(item.category)) {
-      const iconText = categoryIcons[item.category] || '📍';
+    const category = item.category || 'Sonstiges';
+
+    if (checkedCategories.includes(category)) {
+      const iconText = categoryIcons[category] || '📍';
       const customIcon = L.divIcon({
         html: `<div style="font-size: 22px;">${iconText}</div>`,
         className: 'custom-div-icon',
@@ -259,9 +261,11 @@ function renderMarkers() {
         iconAnchor: [15, 15]
       });
 
-      const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(map);
-      marker.bindPopup(buildPopupHtml(key, item));
-      activeMarkers.push(marker);
+      if (item.lat && item.lng) {
+        const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], { icon: customIcon }).addTo(map);
+        marker.bindPopup(buildPopupHtml(key, item));
+        activeMarkers.push(marker);
+      }
     }
   });
 }
@@ -302,7 +306,7 @@ function editPlace(key) {
 
   document.getElementById('modalTitle').innerText = 'Ort bearbeiten';
   document.getElementById('editKey').value = key;
-  document.getElementById('placeTitle').value = item.title || '';
+  document.getElementById('placeTitle').value = item.title || item.name || '';
   document.getElementById('placeCategory').value = item.category || 'Stellplatz';
   document.getElementById('placeLat').value = item.lat;
   document.getElementById('placeLng').value = item.lng;
@@ -317,7 +321,7 @@ function editPlace(key) {
 function deletePlace(key) {
   const password = prompt("Bitte Passwort zum Löschen eingeben:");
   if (password === "1234") {
-    db.ref('places/' + key).remove();
+    db.ref('markers/' + key).remove();
   } else {
     alert("Falsches Passwort!");
   }
@@ -342,9 +346,9 @@ function savePlace() {
   }
 
   if (key) {
-    db.ref('places/' + key).update(data);
+    db.ref('markers/' + key).update(data);
   } else {
-    db.ref('places').push(data);
+    db.ref('markers').push(data);
   }
 
   closeModal();
