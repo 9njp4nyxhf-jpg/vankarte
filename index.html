@@ -108,89 +108,92 @@ button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,
 <script>
 const orsApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk3YTlkMmYwYTRiYTQ3MjdiNzQyZjMyODNlMDk2N2I2IiwiaCI6Im11cm11cjY0In0=";
 const firebaseConfig = {
-apiKey: "AIzaSyC08G4qAOB3I9p7rHyT_IaA9phN1SlmKcw",
-authDomain: "van-karte.firebaseapp.com",
-databaseURL: "https://van-karte-default-rtdb.europe-west1.firebasedatabase.app",
-projectId: "van-karte",
-storageBucket: "van-karte.firebasestorage.app",
-messagingSenderId: "17815837597",
-appId: "1:17815837597:web:d2d345e1c822b0ee0dad74"
+  apiKey: "AIzaSyC08G4qAOB3I9p7rHyT_IaA9phN1SlmKcw",
+  authDomain: "van-karte.firebaseapp.com",
+  databaseURL: "https://van-karte-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "van-karte",
+  storageBucket: "van-karte.firebasestorage.app",
+  messagingSenderId: "17815837597",
+  appId: "1:17815837597:web:d2d345e1c822b0ee0dad74"
 };
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
+
 var map = L.map('map').setView([54, 15], 4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors'}).addTo(map);
 
 if (navigator.geolocation) {
-navigator.geolocation.getCurrentPosition(function(position) {
-var lat = position.coords.latitude;
-var lng = position.coords.longitude;
-L.circleMarker([lat, lng], {
-    radius: 9, fillColor: '#3388ff', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
-}).addTo(map).bindPopup("📍 Hier bist du gerade");
-map.setView([lat, lng], 9);
-}, function(err) { console.log("GPS nicht verfügbar"); });
+  navigator.geolocation.getCurrentPosition(function(position) {
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
+    L.circleMarker([lat, lng], {
+        radius: 9, fillColor: '#3388ff', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
+    }).addTo(map).bindPopup("📍 Hier bist du gerade");
+    map.setView([lat, lng], 9);
+  }, function(err) { console.log("GPS nicht verfügbar"); });
 }
 
 L.Control.geocoder({
-defaultMarkGeocode: false,
-placeholder: "🔍 Ort suchen...",
-errorMessage: "Ort nicht gefunden."
+  defaultMarkGeocode: false,
+  placeholder: "🔍 Ort suchen...",
+  errorMessage: "Ort nicht gefunden."
 })
 .on('markgeocode', function(e) {
-var bbox = e.geocode.bbox;
-var poly = L.polygon([bbox.getSouthEast(), bbox.getNorthEast(), bbox.getNorthWest(), bbox.getSouthWest()]);
-map.fitBounds(poly.getBounds());
-L.popup().setLatLng(e.geocode.center).setContent("📌 " + e.geocode.name).openOn(map);
+  var bbox = e.geocode.bbox;
+  var poly = L.polygon([bbox.getSouthEast(), bbox.getNorthEast(), bbox.getNorthWest(), bbox.getSouthWest()]);
+  map.fitBounds(poly.getBounds());
+  L.popup().setLatLng(e.geocode.center).setContent("📌 " + e.geocode.name).openOn(map);
 })
 .addTo(map);
 
 var markersArray = [];
 var categoryLayers = {
-stellplatz: L.layerGroup().addTo(map),
-camping: L.layerGroup().addTo(map),
-wasser: L.layerGroup().addTo(map),
-genuss: L.layerGroup().addTo(map),
-shoppen: L.layerGroup().addTo(map),
-wasserwunder: L.layerGroup().addTo(map),
-abenteuer: L.layerGroup().addTo(map),
-kultur: L.layerGroup().addTo(map),
-natur: L.layerGroup().addTo(map),
-tiere: L.layerGroup().addTo(map)
+  stellplatz: L.layerGroup().addTo(map),
+  camping: L.layerGroup().addTo(map),
+  wasser: L.layerGroup().addTo(map),
+  genuss: L.layerGroup().addTo(map),
+  shoppen: L.layerGroup().addTo(map),
+  wasserwunder: L.layerGroup().addTo(map),
+  abenteuer: L.layerGroup().addTo(map),
+  kultur: L.layerGroup().addTo(map),
+  natur: L.layerGroup().addTo(map),
+  tiere: L.layerGroup().addTo(map)
 };
 var routeLayer = L.layerGroup().addTo(map);
 
 function createEmojiIcon(emoji){
-return L.divIcon({
-html:`<div style="font-size:24px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.15));">${emoji}</div>`,
-className:'',
-iconSize:[30,30],
-iconAnchor:[15,30]
-});
+  return L.divIcon({
+    html:`<div style="font-size:24px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.15));">${emoji}</div>`,
+    className:'',
+    iconSize:[30,30],
+    iconAnchor:[15,30]
+  });
 }
+
 var icons = {
-stellplatz: createEmojiIcon("🚐"),
-camping: createEmojiIcon("⛺"),
-wasser: createEmojiIcon("💧"),
-genuss: createEmojiIcon("☕"),
-shoppen: createEmojiIcon("👜"),
-wasserwunder: createEmojiIcon("🌊"),
-abenteuer: createEmojiIcon("🚶"),
-kultur: createEmojiIcon("🏰"),
-natur: createEmojiIcon("🌲"),
-tiere: createEmojiIcon("🐾")
+  stellplatz: createEmojiIcon("🚐"),
+  camping: createEmojiIcon("⛺"),
+  wasser: createEmojiIcon("💧"),
+  genuss: createEmojiIcon("☕"),
+  shoppen: createEmojiIcon("👜"),
+  wasserwunder: createEmojiIcon("🌊"),
+  abenteuer: createEmojiIcon("🚶"),
+  kultur: createEmojiIcon("🏰"),
+  natur: createEmojiIcon("🌲"),
+  tiere: createEmojiIcon("🐾")
 };
+
 var popupInfos = {
-stellplatz: '🚐 Stellplatz',
-camping: '⛺ Campingplatz',
-wasser: '💧 Frischwasser',
-genuss: '☕ Essen',
-shoppen: '👜 Bummeln',
-wasserwunder: '🌊 Wasser',
-abenteuer: '🚶 Aktivität & Abenteuer',
-kultur: '🏰 Kultur & Sehenswürdigkeit',
-natur: '🌲 Naturgebiet',
-tiere: '🐾 Tiere beobachten'
+  stellplatz: '🚐 Stellplatz',
+  camping: '⛺ Campingplatz',
+  wasser: '💧 Frischwasser',
+  genuss: '☕ Essen',
+  shoppen: '👜 Bummeln',
+  wasserwunder: '🌊 Wasser',
+  abenteuer: '🚶 Aktivität & Abenteuer',
+  kultur: '🏰 Kultur & Sehenswürdigkeit',
+  natur: '🌲 Naturgebiet',
+  tiere: '🐾 Tiere beobachten'
 };
 
 function toggleControls() {
@@ -206,259 +209,288 @@ function toggleControls() {
 }
 
 function resizeImage(file, maxWidth, callback) {
-var reader = new FileReader();
-reader.readAsDataURL(file);
-reader.onload = function(event) {
-var img = new Image();
-img.src = event.target.result;
-img.onload = function() {
-var canvas = document.createElement('canvas');
-var width = img.width; var height = img.height;
-if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-canvas.width = width; canvas.height = height;
-var ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
-var dataUrl = canvas.toDataURL('image/jpeg', 0.7); callback(dataUrl);
-};
-};
+  var reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = function(event) {
+    var img = new Image();
+    img.src = event.target.result;
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var width = img.width; 
+      var height = img.height;
+      if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+      canvas.width = width; canvas.height = height;
+      var ctx = canvas.getContext('2d'); 
+      ctx.drawImage(img, 0, 0, width, height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
+      callback(dataUrl);
+    };
+  };
 }
+
 function saveMarkerToFirebase(latlng, category, text, name, ownInfo, webLink, photoData, hasStrom, hasWasser) {
-if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) { webLink = 'https://' + webLink; }
-const newMarkerRef = database.ref('markers').push();
-newMarkerRef.set({
-lat: latlng.lat, lng: latlng.lng, category: category, text: text, name: name,
-ownInfo: ownInfo || "", webLink: webLink || "", photo: photoData || "",
-hasStrom: hasStrom || false, hasWasser: hasWasser || false,
-selected: true, timestamp: firebase.database.ServerValue.TIMESTAMP
-});
-document.getElementById("photoInput").value = "";
+  if (webLink && !webLink.startsWith('http://') && !webLink.startsWith('https://')) { webLink = 'https://' + webLink; }
+  const newMarkerRef = database.ref('markers').push();
+  newMarkerRef.set({
+    lat: latlng.lat, lng: latlng.lng, category: category, text: text, name: name,
+    ownInfo: ownInfo || "", webLink: webLink || "", photo: photoData || "",
+    hasStrom: hasStrom || false, hasWasser: hasWasser || false,
+    selected: true, timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+  document.getElementById("photoInput").value = "";
 }
+
 map.on('click', function(e){
-var mainType = prompt("1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Frischwasser 💧\n4 = Essen ☕\n5 = Bummeln 👜\n6 = Sehenswürdigkeit / Aktivität");
-if(!mainType) return;
-var name = prompt("Name des Ortes:");
-if(!name) return;
-var ownInfo = prompt("Notizen / Kurze Info zu diesem Ort:");
-var webLink = prompt("Webseite/Link (optional):","");
-var category="", text="", emoji="", hasStrom=false, hasWasser=false;
-if(mainType==1 || mainType==2){
-category = (mainType==1) ? "stellplatz" : "camping";
-emoji = (mainType==1) ? "🚐" : "⛺";
-var stromFrage = prompt("Gibt es Strom? (ja / nein)", "nein");
-var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", "nein");
-if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; }
-if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; }
-} 
-else if(mainType==3){ category="wasser"; emoji="💧"; }
-else if(mainType==4){ category="genuss"; emoji="☕"; }
-else if(mainType==5){ category="shoppen"; emoji="👜"; }
-else if(mainType==6){
-var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasser 🌊\n4=Abenteuer & Action 🚶\n5=Tiere 🐾");
-if(subType==1){category="kultur"; emoji="🏰";}
-else if(subType==2){category="natur"; emoji="🌲";}
-else if(subType==3){category="wasserwunder"; emoji="🌊";}
-else if(subType==4){category="abenteuer"; emoji="🚶";}
-else if(subType==5){category="tiere"; emoji="🐾";}
-else return;
-} 
-else return;
-var ausstattungZusatz = "";
-if(hasStrom) ausstattungZusatz += "⚡";
-if(hasWasser) ausstattungZusatz += "💧";
-text = emoji + " " + name + (ausstattungZusatz ? " " + ausstattungZusatz : "");
-var fileInput = document.getElementById("photoInput");
-if(fileInput.files.length > 0){
-resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
+  var mainType = prompt("1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Frischwasser 💧\n4 = Essen ☕\n5 = Bummeln 👜\n6 = Sehenswürdigkeit / Aktivität");
+  if(!mainType) return;
+  var name = prompt("Name des Ortes:");
+  if(!name) return;
+  var ownInfo = prompt("Notizen / Kurze Info zu diesem Ort:");
+  var webLink = prompt("Webseite/Link (optional):","");
+  var category="", text="", emoji="", hasStrom=false, hasWasser=false;
+
+  if(mainType==1 || mainType==2){
+    category = (mainType==1) ? "stellplatz" : "camping";
+    emoji = (mainType==1) ? "🚐" : "⛺";
+    var stromFrage = prompt("Gibt es Strom? (ja / nein)", "nein");
+    var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", "nein");
+    if(stromFrage && stromFrage.toLowerCase().trim() === "ja") { hasStrom = true; }
+    if(wasserFrage && wasserFrage.toLowerCase().trim() === "ja") { hasWasser = true; }
+  } else if(mainType==3){ category="wasser"; emoji="💧"; }
+  else if(mainType==4){ category="genuss"; emoji="☕"; }
+  else if(mainType==5){ category="shoppen"; emoji="👜"; }
+  else if(mainType==6){
+    var subType=prompt("1=Kultur 🏰\n2=Natur 🌲\n3=Wasser 🌊\n4=Abenteuer & Action 🚶\n5=Tiere 🐾");
+    if(subType==1){category="kultur"; emoji="🏰";}
+    else if(subType==2){category="natur"; emoji="🌲";}
+    else if(subType==3){category="wasserwunder"; emoji="🌊";}
+    else if(subType==4){category="abenteuer"; emoji="🚶";}
+    else if(subType==5){category="tiere"; emoji="🐾";}
+    else return;
+  } else return;
+
+  var ausstattungZusatz = "";
+  if(hasStrom) ausstattungZusatz += "⚡";
+  if(hasWasser) ausstattungZusatz += "💧";
+  text = emoji + " " + name + (ausstattungZusatz ? " " + ausstattungZusatz : "");
+
+  var fileInput = document.getElementById("photoInput");
+  if(fileInput.files.length > 0){
+    resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
+      saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, resizedPhotoData, hasStrom, hasWasser);
     });
-} else {
-saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
-}
+  } else {
+    saveMarkerToFirebase(e.latlng, category, text, name, ownInfo, webLink, "", hasStrom, hasWasser);
+  }
 });
+
 database.ref('markers').on('value', function(snapshot) {
-markersArray.forEach(m => { if(m.leafletMarker) map.removeLayer(m.leafletMarker); });
-markersArray = [];
-const data = snapshot.val();
-if (data) {
-Object.keys(data).forEach(key => {
-var item = data[key]; item.key = key;
-var ausstattungText = "";
-if(item.category === "stellplatz" || item.category === "camping") {
-ausstattungText = `<div class="popup-info" style="margin-top:4px; font-weight:bold; color:#bc6c25;">` +
-`Ausstattung: ${item.hasStrom ? '⚡ Strom' : '❌ kein Strom'} | ${item.hasWasser ? '💧 Wasser' : '❌ kein Wasser'}` +
-`</div>`;
-}
-var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(
-`<div class="popup-content">
-<div class="popup-header-box">
-<div class="popup-title-area">
-<div class="popup-icon">${item.text.split(" ")[0]}</div>
-<div>
-<strong style="color:#bc6c25; font-size:14px;">${item.name || item.text.substring(item.text.indexOf(" ")+1)}</strong>
-<div class="popup-info">${popupInfos[item.category]}</div>
-</div>
-</div>
-<div class="popup-actions">
-<button class="popup-action-btn" onclick="editMarker('${item.key}')" title="Bearbeiten">✏️</button>
-<button class="popup-action-btn" onclick="deleteMarker('${item.key}')" title="Löschen">🗑️</button>
-</div>
-</div>
-${ausstattungText}
-${item.ownInfo ? `<div class="popup-notes">📝 ${item.ownInfo}</div>` : ""}
-${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a></div>` : ""}
-${item.photo ? `<img src="${item.photo}" style="width:100%; max-height:140px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
-</div>`
-).addTo(categoryLayers[item.category]);
+  markersArray.forEach(m => { if(m.leafletMarker) map.removeLayer(m.leafletMarker); });
+  markersArray = [];
+  const data = snapshot.val();
+  if (data) {
+    Object.keys(data).forEach(key => {
+      var item = data[key]; 
+      item.key = key;
+      var ausstattungText = "";
+      if(item.category === "stellplatz" || item.category === "camping") {
+        ausstattungText = `<div class="popup-info" style="margin-top:4px; font-weight:bold; color:#bc6c25;">` +
+        `Ausstattung: ${item.hasStrom ? '⚡ Strom' : '❌ kein Strom'} | ${item.hasWasser ? '💧 Wasser' : '❌ kein Wasser'}` +
+        `</div>`;
+      }
 
-marker.on('contextmenu', function() {
-    editMarker(item.key);
+      var googleMapsUrl = `https://www.google.com/maps?q=${item.lat},${item.lng}`;
+
+      var marker = L.marker([item.lat, item.lng], {icon: icons[item.category]}).bindPopup(`<div class="popup-content">
+        <div class="popup-header-box">
+          <div class="popup-title-area">
+            <div class="popup-icon">${item.text.split(" ")[0]}</div>
+            <div>
+              <strong style="color:#bc6c25; font-size:14px;">${item.name || item.text.substring(item.text.indexOf(" ")+1)}</strong>
+              <div class="popup-info">${popupInfos[item.category]}</div>
+            </div>
+          </div>
+          <div class="popup-actions">
+            <button class="popup-action-btn" onclick="editMarker('${item.key}')" title="Bearbeiten">✏️</button>
+            <button class="popup-action-btn" onclick="deleteMarker('${item.key}')" title="Löschen">🗑️</button>
+          </div>
+        </div>${ausstattungText}${item.ownInfo ? `<div class="popup-notes">📝 ${item.ownInfo}</div>` : ""}
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+          <a href="${googleMapsUrl}" target="_blank" class="link-btn" style="background-color: #4285F4;">📍 Google Maps</a>
+          ${item.webLink ? `<a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a>` : ""}
+        </div>
+        ${item.photo ? `<img src="${item.photo}" style="width:100%; max-height:140px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
+      </div>`
+      ).addTo(categoryLayers[item.category]);
+
+      marker.on('contextmenu', function() {
+        editMarker(item.key);
+      });
+
+      item.leafletMarker = marker; 
+      markersArray.push(item);
+    });
+  }
+  renderRouteList();
 });
 
-item.leafletMarker = marker; markersArray.push(item);
-});
+function toggleCategory(cat){ 
+  map.hasLayer(categoryLayers[cat]) ? map.removeLayer(categoryLayers[cat]) : map.addLayer(categoryLayers[cat]); 
 }
-renderRouteList();
-});
-function toggleCategory(cat){ map.hasLayer(categoryLayers[cat]) ? map.removeLayer(categoryLayers[cat]) : map.addLayer(categoryLayers[cat]); }
+
 function calculateRoute(){
-var selectedMarkers = markersArray.filter(m=>m.selected);
-if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
-var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
-fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
-method:'POST', headers:{'Authorization':orsApiKey,'Content-Type':'application/json'}, body:JSON.stringify({coordinates:coords})
-}).then(r=>r.json()).then(data=>{
-routeLayer.clearLayers(); L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacity:0.85}}).addTo(routeLayer);
-}).catch(err=>{console.error(err); alert("Fehler bei Route!");});
+  var selectedMarkers = markersArray.filter(m=>m.selected);
+  if(selectedMarkers.length<2){alert("Bitte mindestens 2 ausgewählte Marker!"); return;}
+  var coords = selectedMarkers.map(m=>[m.lng,m.lat]);
+  fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
+    method:'POST', 
+    headers:{'Authorization':orsApiKey,'Content-Type':'application/json'}, 
+    body:JSON.stringify({coordinates:coords})
+  }).then(r=>r.json()).then(data=>{
+    routeLayer.clearLayers(); 
+    L.geoJSON(data,{style:{color:'#bc6c25',weight:5,opacity:0.85}}).addTo(routeLayer);
+  }).catch(err=>{console.error(err); alert("Fehler bei Route!");});
 }
+
 function renderRouteList(){
-const routeDiv = document.getElementById('routeList'); routeDiv.innerHTML = '';
-const searchVal = document.getElementById('searchBox').value.toLowerCase().trim();
+  const routeDiv = document.getElementById('routeList'); 
+  routeDiv.innerHTML = '';
+  const searchVal = document.getElementById('searchBox').value.toLowerCase().trim();
 
-markersArray.forEach((m,i)=>{
-const matchesSearch = !searchVal || 
-                      m.text.toLowerCase().includes(searchVal) || 
-                      (m.ownInfo && m.ownInfo.toLowerCase().includes(searchVal));
-
-if (!matchesSearch) return;
-
-const div = document.createElement('div'); div.className = 'route-item';
-div.innerHTML = `
-<input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)" style="accent-color: #bc6c25;">
-<span style="font-weight: 500; color: #4a3f35;">${m.text}</span>
-<span>
-<button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
-<button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
-</span>`;
-routeDiv.appendChild(div);
-});
+  markersArray.forEach((m,i)=>{
+    const matchesSearch = !searchVal || 
+                          m.text.toLowerCase().includes(searchVal) || 
+                          (m.ownInfo && m.ownInfo.toLowerCase().includes(searchVal));
+    if (!matchesSearch) return;
+    const div = document.createElement('div'); 
+    div.className = 'route-item';
+    div.innerHTML = `
+    <input type="checkbox" ${m.selected?"checked":""} onchange="toggleSelected(${i},this)" style="accent-color: #bc6c25;">
+    <span style="font-weight: 500; color: #4a3f35;">${m.text}</span>
+    <span>
+      <button onclick="editMarker('${m.key}')" title="Bearbeiten">✏️</button>
+      <button onclick="deleteMarker('${m.key}')" title="Löschen">🗑️</button>
+    </span>`;
+    routeDiv.appendChild(div);
+  });
 }
+
 function toggleSelected(i,cb){ markersArray[i].selected = cb.checked; }
 
 function editMarker(key) {
-var markerData = markersArray.find(m => m.key === key); if (!markerData) return;
-map.closePopup();
+  var markerData = markersArray.find(m => m.key === key); 
+  if (!markerData) return;
+  map.closePopup();
+  
+  var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Frischwasser 💧\n4 = Essen ☕\n5 = Bummeln 👜\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasser 🌊\n9 = Abenteuer 🚶\n10 = Tiere 🐾", "");
+  if (catPrompt === null) return;
+  var currentCategory = markerData.category; 
+  var emoji = markerData.text.split(" ")[0];
 
-var catPrompt = prompt("Kategorie ändern? Leer lassen für unverändert:\n1 = Stellplatz 🚐\n2 = Campingplatz ⛺\n3 = Frischwasser 💧\n4 = Essen ☕\n5 = Bummeln 👜\n6 = Kultur 🏰\n7 = Natur 🌲\n8 = Wasser 🌊\n9 = Abenteuer 🚶\n10 = Tiere 🐾", "");
-if (catPrompt === null) return;
-var currentCategory = markerData.category; var emoji = markerData.text.split(" ")[0];
-if(catPrompt.trim() !== "") {
-var choice = parseInt(catPrompt.trim());
-if(choice==1){ currentCategory="stellplatz"; emoji="🚐"; }
-else if(choice==2){ currentCategory="camping"; emoji="⛺"; }
-else if(choice==3){ currentCategory="wasser"; emoji="💧"; }
-else if(choice==4){ currentCategory="genuss"; emoji="☕"; }
-else if(choice==5){ currentCategory="shoppen"; emoji="👜"; }
-else if(choice==6){ currentCategory="kultur"; emoji="🏰"; }
-else if(choice==7){ currentCategory="natur"; emoji="🌲"; }
-else if(choice==8){ currentCategory="wasserwunder"; emoji="🌊"; }
-else if(choice==9){ currentCategory="abenteuer"; emoji="🚶"; }
-else if(choice==10){ currentCategory="tiere"; emoji="🐾"; }
-}
-var newName = prompt("Name anpassen:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ")+1)); if (newName === null) return;
-var newInfo = prompt("Notizen anpassen:", markerData.ownInfo || ""); if (newInfo === null) return;
-var newLink = prompt("Link anpassen:", markerData.webLink || ""); if (newLink === null) return;
-if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) { newLink = 'https://' + newLink; }
-var currentStrom = markerData.hasStrom || false; var currentWasser = markerData.hasWasser || false;
-if(currentCategory === "stellplatz" || currentCategory === "camping") {
-var stromFrage = prompt("Gibt es Strom? (ja / nein)", currentStrom ? "ja" : "nein");
-var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", currentWasser ? "ja" : "nein");
-currentStrom = (stromFrage && stromFrage.toLowerCase().trim() === "ja");
-currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
-} else { currentStrom = false; currentWasser = false; }
-var ausstattungZusatz = ""; if(currentStrom) ausstattungZusatz += "⚡"; if(currentWasser) ausstattungZusatz += "💧";
-var fullText = emoji + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
+  if(catPrompt.trim() !== "") {
+    var choice = parseInt(catPrompt.trim());
+    if(choice==1){ currentCategory="stellplatz"; emoji="🚐"; }
+    else if(choice==2){ currentCategory="camping"; emoji="⛺"; }
+    else if(choice==3){ currentCategory="wasser"; emoji="💧"; }
+    else if(choice==4){ currentCategory="genuss"; emoji="☕"; }
+    else if(choice==5){ currentCategory="shoppen"; emoji="👜"; }
+    else if(choice==6){ currentCategory="kultur"; emoji="🏰"; }
+    else if(choice==7){ currentCategory="natur"; emoji="🌲"; }
+    else if(choice==8){ currentCategory="wasserwunder"; emoji="🌊"; }
+    else if(choice==9){ currentCategory="abenteuer"; emoji="🚶"; }
+    else if(choice==10){ currentCategory="tiere"; emoji="🐾"; }
+  }
 
-var changePhoto = confirm("Möchtest du das FOTO für diesen Ort ändern oder ein neues hinzufügen?");
-if(changePhoto) {
-    alert("Bitte wähle jetzt im Menü unten rechts unter 'Foto für neuen Ort' dein neues Bild aus. Danach wird der Ort automatisch aktualisiert!");
-    
-    var panel = document.getElementById('controls');
-    if (panel.classList.contains('collapsed')) { toggleControls(); }
-    
-    var fileInput = document.getElementById("photoInput");
-    fileInput.onchange = function() {
-        if(fileInput.files.length > 0) {
-            resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
-                database.ref('markers/' + key).update({ 
-                    category: currentCategory, name: newName, text: fullText, 
-                    ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
-                    hasWasser: currentWasser, photo: resizedPhotoData 
-                });
-                document.getElementById("photoInput").value = "";
-                fileInput.onchange = null;
-                alert("Foto erfolgreich geändert!");
-            });
-        }
-    };
-} else {
-    database.ref('markers/' + key).update({ 
-        category: currentCategory, name: newName, text: fullText, 
-        ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
-        hasWasser: currentWasser 
-    });
-}
+  var newName = prompt("Name anpassen:", markerData.name || markerData.text.substring(markerData.text.indexOf(" ")+1)); 
+  if (newName === null) return;
+  var newInfo = prompt("Notizen anpassen:", markerData.ownInfo || ""); 
+  if (newInfo === null) return;
+  var newLink = prompt("Link anpassen:", markerData.webLink || ""); 
+  if (newLink === null) return;
+  if (newLink && !newLink.startsWith('http://') && !newLink.startsWith('https://')) { newLink = 'https://' + newLink; }
+
+  var currentStrom = markerData.hasStrom || false; 
+  var currentWasser = markerData.hasWasser || false;
+  if(currentCategory === "stellplatz" || currentCategory === "camping") {
+    var stromFrage = prompt("Gibt es Strom? (ja / nein)", currentStrom ? "ja" : "nein");
+    var wasserFrage = prompt("Gibt es Wasser am Platz? (ja / nein)", currentWasser ? "ja" : "nein");
+    currentStrom = (stromFrage && stromFrage.toLowerCase().trim() === "ja");
+    currentWasser = (wasserFrage && wasserFrage.toLowerCase().trim() === "ja");
+  } else { currentStrom = false; currentWasser = false; }
+
+  var ausstattungZusatz = ""; 
+  if(currentStrom) ausstattungZusatz += "⚡"; 
+  if(currentWasser) ausstattungZusatz += "💧";
+  var fullText = emoji + " " + newName + (ausstattungZusatz ? " " + ausstattungZusatz : "");
+
+  var changePhoto = confirm("Möchtest du das FOTO für diesen Ort ändern oder ein neues hinzufügen?");
+  if(changePhoto) {
+      alert("Bitte wähle jetzt im Menü unten rechts unter 'Foto für neuen Ort' dein neues Bild aus. Danach wird der Ort automatisch aktualisiert!");
+      var panel = document.getElementById('controls');
+      if (panel.classList.contains('collapsed')) { toggleControls(); }
+      var fileInput = document.getElementById("photoInput");
+      fileInput.onchange = function() {
+          if(fileInput.files.length > 0) {
+              resizeImage(fileInput.files[0], 600, function(resizedPhotoData) {
+                  database.ref('markers/' + key).update({ 
+                      category: currentCategory, name: newName, text: fullText, 
+                      ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
+                      hasWasser: currentWasser, photo: resizedPhotoData 
+                  });
+                  document.getElementById("photoInput").value = "";
+                  fileInput.onchange = null;
+                  alert("Foto erfolgreich geändert!");
+              });
+          }
+      };
+  } else {
+      database.ref('markers/' + key).update({ 
+          category: currentCategory, name: newName, text: fullText, 
+          ownInfo: newInfo, webLink: newLink, hasStrom: currentStrom, 
+          hasWasser: currentWasser 
+      });
+  }
 }
 
 function deleteMarker(key){ 
-    map.closePopup();
-    if(confirm("Möchtest du diesen Ort wirklich löschen?")) { 
-        database.ref('markers/' + key).remove(); 
-    } 
+  map.closePopup();
+  if(confirm("Möchtest du diesen Ort wirklich löschen?")) { 
+      database.ref('markers/' + key).remove(); 
+  } 
 }
 
 function downloadBackup() {
-    database.ref('markers').once('value').then(snapshot => {
-        const data = snapshot.val();
-        if (!data) { alert("Keine Daten zum Sichern vorhanden!"); return; }
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", "vankarte_sicherung_" + new Date().toISOString().slice(0,10) + ".json");
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-    });
+  database.ref('markers').once('value').then(snapshot => {
+      const data = snapshot.val();
+      if (!data) { alert("Keine Daten zum Sichern vorhanden!"); return; }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "vankarte_sicherung_" + new Date().toISOString().slice(0,10) + ".json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+  });
 }
 
 function uploadBackup(input) {
-    if (input.files.length === 0) return;
-    const file = input.files[0];
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const importedData = JSON.parse(e.target.result);
-            if (confirm("Möchtest du die Sicherung jetzt einspielen? Fehlende Orte werden in Firebase wiederhergestellt.")) {
-                Object.keys(importedData).forEach(key => {
-                    database.ref('markers/' + key).set(importedData[key]);
-                });
-                alert("Sicherung erfolgreich geladen!");
-                input.value = "";
-            }
-        } catch (err) {
-            alert("Fehler beim Lesen der Datei. Ist es eine gültige Sicherungsdatei?");
-        }
-    };
-    reader.readAsText(file);
+  if (input.files.length === 0) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+      try {
+          const importedData = JSON.parse(e.target.result);
+          if (confirm("Möchtest du die Sicherung jetzt einspielen? Fehlende Orte werden in Firebase wiederhergestellt.")) {
+              Object.keys(importedData).forEach(key => {
+                  database.ref('markers/' + key).set(importedData[key]);
+              });
+              alert("Sicherung erfolgreich geladen!");
+              input.value = "";
+          }
+      } catch (err) {
+          alert("Fehler beim Lesen der Datei. Ist es eine gültige Sicherungsdatei?");
+      }
+  };
+  reader.readAsText(file);
 }
 </script>
-</body>
-</html>
