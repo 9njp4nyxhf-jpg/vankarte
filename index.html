@@ -1,110 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-<meta charset="utf-8" />
-<title>Van Karte - Familien-Edition</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Van Karte</title>
+  
+  <!-- Leaflet & Geocoder CSS/JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-<link rel="icon" type="image/png" href="logo.png" />
-<link rel="apple-touch-icon" href="logo.png" />
-<meta name="apple-mobile-web-app-image" content="logo.png" />
+  <!-- Firebase Legacy SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-<style>
-body { margin:0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#f7f5f0; color: #4a3f35; overflow: hidden; }
-#map { height: 100vh; width: 100vw; background: #e5e2db; position: absolute; top: 0; left: 0; z-index: 1; }
-#controls { 
-    position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000;
-    background: #faf7f2; box-shadow: 0 -3px 15px rgba(0,0,0,0.1); 
-    border-radius: 16px 16px 0 0; 
-    transition: transform 0.3s ease-in-out;
-    transform: translateY(0);
-}
-#controls.collapsed {
-    transform: translateY(calc(100% - 30px));
-}
-#toggle-bar {
-    height: 30px; background: #dda15e; border-radius: 16px 16px 0 0;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: white; font-size: 12px; font-weight: bold;
-}
-#toggle-bar:hover { background: #bc6c25; }
-.controls-content { padding: 10px 15px 15px 15px; max-height: 40vh; overflow-y: auto; }
-.section-title { color: #bc6c25; font-size: 13px; font-weight: bold; margin-bottom: 6px; display: inline-block; }
-.filter-container { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-label { white-space: nowrap; display: inline-flex; align-items: center; background: #fff; padding: 4px 8px; border-radius: 15px; border: 1px solid #e6dfd3; font-size: 11px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); cursor: pointer; transition: all 0.2s; }
-label input { margin-right: 4px; }
-label:hover { background: #f4efe6; border-color: #d4a373; }
-.action-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-button { background-color: #dda15e; color: white; border: none; padding: 6px 12px; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 11px; box-shadow: 0 1px 4px rgba(221,161,94,0.3); transition: all 0.2s; }
-button:hover { background-color: #bc6c25; box-shadow: 0 2px 6px rgba(188,108,37,0.4); }
-.btn-backup { background-color: #606c38; box-shadow: 0 1px 4px rgba(96,108,56,0.3); }
-.btn-backup:hover { background-color: #283618; }
-.photo-box { font-size: 11px; color: #6b5e4f; background: #fff; padding: 5px 10px; border-radius: 12px; border: 1px solid #e6dfd3; display: inline-flex; align-items: center; }
-#photoInput { font-size: 11px; margin-left: 5px; color: #6b5e4f; max-width: 130px; }
-.search-box { width: 100%; box-sizing: border-box; padding: 6px 12px; border-radius: 15px; border: 1px solid #e6dfd3; font-size: 11px; margin-bottom: 8px; background: #fff; color: #4a3f35; }
-.search-box:focus { outline: none; border-color: #bc6c25; }
-#routeList { max-height: 90px; overflow-y: auto; border: 1px solid #e6dfd3; padding: 6px; background: #f1ede2; border-radius: 10px; font-size: 11px; }
-.route-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; background: #fff; padding: 4px 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); border-left: 3px solid #dda15e; }
-.route-item:last-child { margin-bottom: 0; }
-.route-item button { margin-left: 2px; cursor: pointer; border: none; background: none; font-size: 13px; padding: 0 2px; box-shadow: none; color: #4a3f35; }
-.route-item button:hover { background: #f4efe6; color: #bc6c25; }
-.popup-content { display: flex; flex-direction: column; padding: 4px; background: transparent; max-width: 220px; }
-.popup-header-box { display: flex; align-items: center; margin-bottom: 6px; justify-content: space-between; }
-.popup-title-area { display: flex; align-items: center; }
-.popup-icon { font-size: 24px; margin-right: 10px; background: #f4efe6; padding: 6px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
-.popup-actions { display: flex; gap: 2px; }
-.popup-action-btn { background: none; border: none; font-size: 15px; cursor: pointer; padding: 4px; border-radius: 50%; transition: background 0.2s; box-shadow: none; }
-.popup-action-btn:hover { background: #e6dfd3; }
-.popup-info { margin-top: 2px; font-size: 12px; color: #6b5e4f; }
-.popup-notes { margin-top: 6px; font-size: 12px; color: #554a3e; background: #f5f0e6; padding: 8px; border-radius: 8px; border-left: 3px solid #bc6c25; white-space: pre-wrap; line-height: 1.4; }
-.link-btn { display: inline-block; margin-top: 8px; padding: 5px 10px; background-color: #bc6c25; color: white !important; text-decoration: none; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(188,108,37,0.2); text-align: center; }
-.link-btn:hover { background-color: #606c38; }
-.leaflet-popup-content-wrapper { border-radius: 16px; background: #fdfbf7; color: #4a3f35; border: 1px solid #e6dfd3; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.leaflet-popup-tip { background: #fdfbf7; }
-.leaflet-control-geocoder { border-radius: 20px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; border: 1px solid #e6dfd3 !important; overflow: hidden; margin-top: 10px !important; }
-.leaflet-control-geocoder-form input { font-size: 13px; padding: 6px; background: #fdfbf7; }
-</style>
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; }
+    #map { width: 100vw; height: 100vh; }
+    
+    /* Menü-Steuerung */
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      max-width: 300px;
+      transition: all 0.3s ease;
+    }
+    #controls.collapsed #controls-content { display: none; }
+    #toggle-bar { cursor: pointer; font-weight: bold; color: #bc6c25; text-align: center; }
+    
+    /* Pop-up Styles */
+    .popup-content { font-size: 13px; color: #333; }
+    .popup-header-box { display: flex; justify-content: space-between; align-items: center; }
+    .popup-title-area { display: flex; align-items: center; gap: 8px; }
+    .popup-icon { font-size: 20px; }
+    .popup-info { font-size: 11px; color: #666; }
+    .popup-notes { margin-top: 6px; font-style: italic; background: #f4f1de; padding: 6px; border-radius: 6px; }
+    .popup-actions { display: flex; gap: 4px; }
+    .popup-action-btn { background: none; border: none; cursor: pointer; font-size: 14px; }
+    .link-btn {
+      display: inline-block;
+      padding: 4px 8px;
+      background-color: #bc6c25;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    /* Modal für die Bild-Vergrößerung */
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    .image-modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    
+    /* Routenliste & Eingaben */
+    .route-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
+    #routeList { max-height: 120px; overflow-y: auto; margin-top: 8px; }
+  </style>
 </head>
 <body>
-<div id="map"></div>
-<div id="controls">
-<div id="toggle-bar" onclick="toggleControls()">🌾 Menü ausblenden 🔽</div>
-<div class="controls-content">
-<div class="section-title">Filter:</div>
-<div class="filter-container">
-<label><input type="checkbox" checked onchange="toggleCategory('stellplatz')"> 🚐 Stellplatz</label>
-<label><input type="checkbox" checked onchange="toggleCategory('camping')"> ⛺ Campingplatz</label>
-<label><input type="checkbox" checked onchange="toggleCategory('wasser')"> 💧 Frischwasser</label>
-<label><input type="checkbox" checked onchange="toggleCategory('genuss')"> ☕ Essen</label>
-<label><input type="checkbox" checked onchange="toggleCategory('shoppen')"> 👜 Bummeln</label>
-<label><input type="checkbox" checked onchange="toggleCategory('wasserwunder')"> 🌊 Wasser</label>
-<label><input type="checkbox" checked onchange="toggleCategory('abenteuer')"> 🚶 Abenteuer</label>
-<label><input type="checkbox" checked onchange="toggleCategory('kultur')"> 🏰 Kultur</label>
-<label><input type="checkbox" checked onchange="toggleCategory('natur')"> 🌲 Natur</label>
-<label><input type="checkbox" checked onchange="toggleCategory('tiere')"> 🐾 Tiere</label>
-</div>
-<div class="action-row">
-<div>
-<button onclick="calculateRoute()">🛣️ Route berechnen</button>
-<button onclick="downloadBackup()" class="btn-backup" title="Sicherung auf Gerät laden">📥 Backup erstellen</button>
-<button onclick="document.getElementById('importInput').click()" class="btn-backup" title="Sicherung wiederherstellen">📤 Sicherung laden</button>
-<input type="file" id="importInput" accept=".json" style="display:none;" onchange="uploadBackup(this)">
-</div>
-<div class="photo-box">
-📸 <span>Foto für neuen Ort:</span>
-<input type="file" id="photoInput" accept="image/*">
-</div>
-</div>
-<input type="text" id="searchBox" class="search-box" placeholder="🔍 Eigene Orte filtern..." oninput="renderRouteList()">
-<div id="routeList"></div>
-</div>
-</div>
+
+  <!-- Overlay-Fenster für vergrößerte Fotos -->
+  <div id="imageModal" class="image-modal" onclick="this.style.display='none'">
+    <img id="modalImage" src="" alt="Vergrößertes Foto">
+  </div>
+
+  <div id="map"></div>
+
+  <div id="controls">
+    <div id="toggle-bar" onclick="toggleControls()">🌾 Menü ausblenden 🔽</div>
+    <div id="controls-content">
+      <hr style="border:0; border-top:1px solid #eee; margin: 8px 0;">
+      
+      <input type="text" id="searchBox" placeholder="🔍 Ort suchen..." onkeyup="renderRouteList()" style="width:95%; padding:4px; margin-bottom:6px;">
+      
+      <div id="routeList"></div>
+      
+      <button onclick="calculateRoute()" style="width:100%; margin-top:6px; background:#bc6c25; color:white; border:none; padding:6px; border-radius:6px; cursor:pointer;">🗺️ Route berechnen</button>
+      
+      <hr style="border:0; border-top:1px solid #eee; margin: 8px 0;">
+      
+      <label style="font-size:11px; color:#555;">📷 Foto für neuen Ort wählen:</label>
+      <input type="file" id="photoInput" accept="image/*" style="width:100%; font-size:11px; margin-top:2px;">
+      
+      <div style="margin-top:10px; display:flex; gap:4px;">
+        <button onclick="downloadBackup()" style="font-size:10px; width:50%;">💾 Sicherung</button>
+        <button onclick="document.getElementById('uploadInput').click()" style="font-size:10px; width:50%;">📂 Wiederherstellen</button>
+        <input type="file" id="uploadInput" style="display:none;" onchange="uploadBackup(this)">
+      </div>
+    </div>
+  </div>
+
 <script>
 const orsApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk3YTlkMmYwYTRiYTQ3MjdiNzQyZjMyODNlMDk2N2I2IiwiaCI6Im11cm11cjY0In0=";
 const firebaseConfig = {
@@ -206,6 +214,11 @@ function toggleControls() {
         panel.classList.add('collapsed');
         bar.innerHTML = "🌾 Menü einblenden 🔼";
     }
+}
+
+function openPhotoModal(src) {
+  document.getElementById('modalImage').src = src;
+  document.getElementById('imageModal').style.display = 'flex';
 }
 
 function resizeImage(file, maxWidth, callback) {
@@ -341,7 +354,7 @@ database.ref('markers').on('value', function(snapshot) {
           <a href="${googleMapsUrl}" target="_blank" class="link-btn" style="background-color: #4285F4;">📍 Google Maps</a>
           ${item.webLink ? `<a href="${item.webLink}" target="_blank" class="link-btn">🌐 Link öffnen</a>` : ""}
         </div>
-        ${item.photo ? `<img src="${item.photo}" style="width:100%; max-height:140px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3;">` : ""}
+        ${item.photo ? `<img src="${item.photo}" onclick="openPhotoModal('${item.photo}')" style="width:100%; max-height:140px; object-fit:cover; border-radius:10px; margin-top:8px; border: 1px solid #e6dfd3; cursor:pointer;" title="Klicken zum Vergrößern">` : ""}
       </div>`
       ).addTo(categoryLayers[item.category]);
 
@@ -541,3 +554,5 @@ function uploadBackup(input) {
   reader.readAsText(file);
 }
 </script>
+</body>
+</html>
